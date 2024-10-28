@@ -34,7 +34,8 @@ def main():
         ax,
         xlabel=r'$\tau$',
         ylabel='Integrand',
-        title=r'The integrand of $T_c^\lambda$, $\langle \hat \sigma_y \hat p \rangle/2$',
+        title=r'The integrand of $T_c^\lambda$, ' \
+            r'$ \frac{1}{2} \langle \psi^\tau |  \hat \sigma_y \hat p | \psi^\tau \rangle$',
         legend=True,
     )
 
