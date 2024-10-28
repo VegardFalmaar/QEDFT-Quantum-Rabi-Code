@@ -17,31 +17,30 @@ def main():
     lmbda_values = np.linspace(0, 1.0, 41)
     fig, ax = plt.subplots(figsize=(PC.fig_width, PC.fig_height))
     for sigma, ls in zip([0.0, 0.4, 0.6], PC.line_styles):
-        F_values = np.zeros_like(lmbda_values)
+        T_values = np.zeros_like(lmbda_values)
         for i, lmbda in enumerate(lmbda_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            F_values[i] = qr.F(sigma, xi)
+            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
 
         ax.plot(
             lmbda_values,
-            F_values / omega,
+            T_values / omega,
             label=r'$\sigma = ' f'{sigma:.2f}$',
             ls=ls,
             color='k',
         )
-    ax.set_ylim(-4.2, 0.1)
     PC.set_ax_info(
         ax,
-        xlabel=r'$\lambda$',
-        ylabel=r'$F_\mathrm{LL}^\lambda (\sigma, \xi) \, / \, \omega$',
-        title=r'The Adiabatic Connection of $F_\mathrm{LL}$',
+        xlabel=r'$\tau$',
+        ylabel=r'$T_c^\tau (\sigma) \, / \, \omega$',
+        title='The Kinetic Correlation Functional',
         legend=True,
     )
 
     PC.parameter_text_box(
         ax,
         s=r'$ t = \omega, \; g = 3 \omega^{3/2}, \; \xi = 0 $',
-        loc='upper right',
+        loc='lower right',
     )
 
     PC.tight_layout(fig, ax_aspect=3/2)
@@ -52,7 +51,7 @@ def main():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('adiabatic-connection', '.pdf', p))
+    fig.savefig(PC.save_fname('T-scaling', '.pdf', p))
     # plt.show()
 
 

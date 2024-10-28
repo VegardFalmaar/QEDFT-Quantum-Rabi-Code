@@ -50,16 +50,10 @@ def main():
         legend=True,
     )
 
-    # textbox for parameter values
-    ax.text(
-        x=0.99,
-        y=0.98,
+    PC.parameter_text_box(
+        ax,
         s=r'$ t = \omega, \; g = 3 \omega^{3/2}, \; \sigma = 0.6, \; \xi = 0 $',
-        alpha=0.7,
-        fontsize=PC.fontsize_parameters,
-        horizontalalignment='right',
-        verticalalignment='top',
-        transform=ax.transAxes
+        loc='upper right',
     )
 
     PC.tight_layout(fig, ax_aspect=3/2)
@@ -71,7 +65,7 @@ def main():
         'sigma': sigma,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('functional-vs-T', '.pdf', p))
+    fig.savefig(PC.save_fname('functional-with-and-without-T', '.pdf', p))
     # plt.show()
 
 

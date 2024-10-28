@@ -24,6 +24,7 @@ class PlotConfig:
     fontsize_suptitle = 10
     fontsize_legends = 8
     fontsize_parameters = 8
+    parameters_alpha = 0.5
 
     line_styles = ['-', '--', ':']
 
@@ -156,3 +157,31 @@ class PlotConfig:
             fname += f'__{parameter}_{value:.4f}'
         result = result / fname
         return result.with_suffix(suffix)
+
+    @staticmethod
+    def parameter_text_box(ax: mpl.axes.Axes, s: str, loc: str) -> None:
+        if loc == 'upper right':
+            x = 0.99
+            y = 0.98
+            horizontalalignment = 'right'
+            verticalalignment = 'top'
+        elif loc == 'lower right':
+            x = 0.99
+            y = 0.02
+            horizontalalignment = 'right'
+            verticalalignment = 'bottom'
+        else:
+            raise ValueError(
+                f'Text box location {loc} is currently not implemented.'
+            )
+
+        ax.text(
+            x=x,
+            y=y,
+            s=s,
+            alpha=PlotConfig.parameters_alpha,
+            fontsize=PlotConfig.fontsize_parameters,
+            horizontalalignment=horizontalalignment,
+            verticalalignment=verticalalignment,
+            transform=ax.transAxes
+        )
