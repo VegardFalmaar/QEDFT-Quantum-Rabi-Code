@@ -8,7 +8,7 @@ from plot_config import PlotConfig as PC
 PC.use_tex()
 
 
-def main():
+def plot_in_lambda():
     omega = 1.0
     t = 1.0 * omega
     g = 3.0 * omega**(3/2)
@@ -51,9 +51,9 @@ def main():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('T-scaling', '.pdf', p))
+    fig.savefig(PC.save_fname('T-scaling-with-lambda', '.pdf', p))
     # plt.show()
 
 
 if __name__ == '__main__':
-    main()
+    plot_in_lambda()
