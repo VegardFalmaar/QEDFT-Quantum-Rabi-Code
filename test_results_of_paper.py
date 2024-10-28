@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 
 from quantum_rabi import QuantumRabi
 
@@ -110,10 +109,5 @@ def test_thm_5_1(omega, t, g, sigma, xi, lmbda):
     qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=OSCILLATOR_SIZE)
     T = qr.T(sigma)
     LHS = qr.F(sigma, xi)
-    RHS = omega / 2 \
-        - t * np.sqrt(1 - sigma**2) \
-        + omega**2 / 2 * xi**2 \
-        + lmbda * g * sigma * xi \
-        - lmbda**2 * 0.5 * g**2 * (1 - sigma**2) / omega**2 \
-        + T
+    RHS = qr.analytic_terms_of_the_coupling(sigma, xi) + T
     assert abs(LHS - RHS) < TOL

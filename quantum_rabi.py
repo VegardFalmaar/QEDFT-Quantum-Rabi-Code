@@ -112,3 +112,10 @@ class QuantumRabi:
         v, j = lt['pot']
         self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
         return v, j
+
+    def analytic_terms_of_the_coupling(self, sigma: float, xi: float):
+        return 0.5 * self.omega \
+            - self.t * np.sqrt(1 - sigma**2) \
+            + 0.5 * self.omega**2 * xi**2 \
+            + self.lmbda * self.g * sigma * xi \
+            - 0.5 * self.lmbda**2 * self.g**2 * (1 - sigma**2) / self.omega**2
