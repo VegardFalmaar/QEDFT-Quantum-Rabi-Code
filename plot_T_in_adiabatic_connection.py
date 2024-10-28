@@ -39,7 +39,7 @@ def main():
 
     PC.parameter_text_box(
         ax,
-        s=r'$ t = \omega, \; g = 3 \omega^{3/2}, \; \xi = 0 $',
+        s=r'$ t = \omega, \; g = 3 \omega^{3/2} $',
         loc='lower right',
     )
 
