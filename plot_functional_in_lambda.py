@@ -9,7 +9,7 @@ PC.use_tex()
 
 
 def main():
-    omega = 1.5
+    omega = 1.0
     t = 1.0 * omega
     g = 3.0 * omega**(3/2)
     xi = 0.0 / np.sqrt(omega)
@@ -55,8 +55,15 @@ def main():
     )
 
     PC.tight_layout(fig, ax_aspect=3/2)
-    # fig.savefig('plots/functional-title-params.pdf')
-    fig.savefig('plots/functional-text-box-params.pdf')
+
+    p = {
+        'omega': omega,
+        't': t,
+        'g': g,
+        'xi': xi,
+    }
+    # fig.savefig(PC.save_fname('functional-title-params', '.pdf', p))
+    fig.savefig(PC.save_fname('functional-text-box-params', '.pdf', p))
     # plt.show()
 
 

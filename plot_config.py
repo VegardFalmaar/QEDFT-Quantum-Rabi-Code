@@ -4,7 +4,9 @@ have. Plots with the figsize herein are intended to be included in the size
 they are created and saved, not to be scaled by e.g. `[width=\linewidth]` in
 the includegraphics command in the manuscript.
 """
+from typing import Dict
 import re
+from pathlib import Path
 
 import numpy as np
 import matplotlib as mpl
@@ -24,6 +26,8 @@ class PlotConfig:
     fontsize_parameters = 8
 
     line_styles = ['-', '--', ':']
+
+    save_dir = 'plots'
 
     @staticmethod
     def use_tex():
@@ -143,3 +147,12 @@ class PlotConfig:
             # includes a value below the lower limit in ylim and one above the
             # upper limit.
             ax.set_yticks([t for t in old_yticks if l <= t <= u])
+
+    @staticmethod
+    def save_fname(prefix: str, suffix: str, parameters: Dict[str, float]) -> Path:
+        result = Path(PlotConfig.save_dir)
+        fname = prefix
+        for parameter, value in parameters.items():
+            fname += f'__{parameter}_{value:.4f}'
+        result = result / fname
+        return result.with_suffix(suffix)
