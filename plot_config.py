@@ -27,6 +27,7 @@ class PlotConfig:
     parameters_alpha = 0.5
 
     line_styles = ['-', '--', ':']
+    linewidth = 0.8
 
     save_dir = 'plots'
 

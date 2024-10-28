@@ -27,6 +27,7 @@ def main():
             F_values / omega,
             label=r'$\sigma = ' f'{sigma:.2f}$',
             ls=ls,
+            lw=PC.linewidth,
             color='k',
         )
     ax.set_ylim(-4.2, 0.1)

@@ -27,6 +27,7 @@ def main():
             integrand_values * omega**(-0.5),
             label=r'$\sigma = ' f'{sigma:.2f}$',
             ls=ls,
+            lw=PC.linewidth,
             color='k',
         )
     ax.set_ylim(-0.2, 0.02)

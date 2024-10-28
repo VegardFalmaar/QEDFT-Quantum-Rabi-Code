@@ -31,6 +31,7 @@ def main():
         F_values / omega,
         label=r'$F_\mathrm{LL}^\lambda$',
         ls='-',
+        lw=PC.linewidth,
         color='k',
     )
     ax.plot(
@@ -38,6 +39,7 @@ def main():
         analytic_terms / omega,
         label=r'$F_\mathrm{LL}^\lambda - T_c^\lambda$',
         ls='--',
+        lw=PC.linewidth,
         color='k',
     )
 
