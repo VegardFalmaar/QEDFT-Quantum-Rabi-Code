@@ -111,3 +111,15 @@ def test_thm_5_1(omega, t, g, sigma, xi, lmbda):
     LHS = qr.F(sigma, xi)
     RHS = qr.analytic_terms_of_the_coupling(sigma, xi) + T
     assert abs(LHS - RHS) < TOL
+
+
+@pytest.mark.parametrize('omega', omega_values)
+@pytest.mark.parametrize('t', t_values)
+@pytest.mark.parametrize('g', g_values)
+@pytest.mark.parametrize('sigma', sigma_values)
+@pytest.mark.parametrize('lmbda', lmbda_values)
+def test_cor_5_3(omega, t, g, sigma, lmbda):
+    LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G(sigma)
+    def integrand(nu):
+        pass
+    RHS = scipy.integrate.quad(integrand, 0, lmbda)[0] / lmbda

@@ -11,6 +11,10 @@ The file `test_results_of_paper.py` contains tests of various equations and
 inequalities of the paper. They are set up using `pytest`, and every equation
 proposition is tested with a combination of different parameters.
 
+The tests pass with the current value of the tolerance only when the `gtol` is
+reduced to `1e-6` in the minimization of the Legendre transform in `dft.py` in
+`qmodel`.
+
 To run the tests in all files whole name start with `test_`, simply run
 ```sh
 pytest

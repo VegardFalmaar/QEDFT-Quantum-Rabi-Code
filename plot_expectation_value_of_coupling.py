@@ -69,8 +69,7 @@ def plot_G():
             if i == 0:
                 continue
             qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=40)
-            T = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0)
-            G_values[i] = - 0.5 * lmbda * g**2 * (1 - sigma**2) / omega**2 - T / lmbda
+            G_values[i] = qr.G(sigma)
 
         ax.plot(
             lmbda_values,
