@@ -28,6 +28,7 @@ class PlotConfig:
 
     line_styles = ['-', '--', ':']
     linewidth = 0.8
+    colors = ['k', 'b', 'g']
 
     save_dir = 'plots'
 
