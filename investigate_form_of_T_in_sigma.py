@@ -25,8 +25,9 @@ def sigma_values_from_logspace():
     return sigma_values
 
 
-def ellipse_fit(sigma, a, b, d):
-    return b * np.sqrt(1 - sigma**2/a**2) - d
+def ellipse_fit(sigma, a, b):
+    return b/a * (np.sqrt(a**2 - sigma**2) - np.sqrt(a**2 - 1))
+    # return b * np.sqrt(1 - sigma**2/a**2) - d
 
 
 def plot_in_sigma():
@@ -150,31 +151,30 @@ def plot_parameters():
             ellipse_fit,
             sigma_values,
             y,
-            bounds=([1, 0, -10], [np.inf, 10, 10]),
+            # bounds=([1, 0], [np.inf, 10]),
+            # bounds=([1, 0, -10], [np.inf, 10, 10]),
+            bounds=([1, -np.inf], [np.inf, np.inf]),
         )
         perr = np.sqrt(np.diag(pcov))
         return ellipsis_params, perr
 
-    # t = 1.0 * omega
-    g = 1.0 * omega**(3/2)
+    t = 1.0 * omega
+    # g = 1.0 * omega**(3/2)
 
-    x_values = np.linspace(0.1, 3.0, 10)
+    x_values = np.linspace(0.1, 3.0, 40)
 
     a_values = np.zeros_like(x_values)
     b_values = np.zeros_like(x_values)
-    d_values = np.zeros_like(x_values)
     a_std_values = np.zeros_like(x_values)
     b_std_values = np.zeros_like(x_values)
-    d_std_values = np.zeros_like(x_values)
-    # for i, g in enumerate(x_values):
-    for i, t in enumerate(x_values):
-        (a, b, d), (a_std, b_std, d_std) = fit()
+    # for i, t in enumerate(x_values):
+    for i, g in enumerate(x_values):
+        (a, b), (a_std, b_std) = fit()
+        # (a, b, d), (a_std, b_std, d_std) = fit()
         a_values[i] = a
         b_values[i] = b
-        d_values[i] = d
         a_std_values[i] = a_std
         b_std_values[i] = b_std
-        d_std_values[i] = d_std
 
     # ax.plot(x_values, a_values, label='a', color='b')
     # ax.fill_between(x_values, a_values - a_std, a_values + a_std, color='b', alpha=0.5)
@@ -183,15 +183,16 @@ def plot_parameters():
     # ax.plot(x_values, d_values, label='d', color='r')
     # ax.fill_between(x_values, d_values - d_std, d_values + d_std, color='r', alpha=0.5)
 
-    t_values = x_values
+    # t_values = x_values
+    # ax.plot(x_values, a_values, label=r'$a$', color='b')
+    # ax.plot(x_values, b_values / t_values, label=r'$b / t$', color='g')
 
-    ax.plot(x_values, a_values, label=r'$a$', color='b')
-    ax.plot(x_values, b_values / t_values, label=r'$b / t$', color='g')
-    ax.plot(x_values, d_values / t_values, label=r'$d / t$', color='r')
+    ax.plot(x_values, a_values, label=r'$a$')
+    ax.plot(x_values, b_values, label=r'$b$')
 
-    ax.set_title(r'$T_c^\lambda = t (b(\lambda) \sqrt{1 - \frac{\sigma^2}{a^2(\lambda, t)}} - d(\lambda, t)$')
-    # ax.set_xlabel(r'$\lambda g / \omega^{3/2}$')
-    ax.set_xlabel(r'$t / \omega$')
+    ax.set_title(r'$T_c^\lambda = \frac{b}{a} \left( \sqrt{a^2 - \sigma^2} - \sqrt{a^2 - 1} \right)$')
+    ax.set_xlabel(r'$\lambda g / \omega^{3/2}$')
+    # ax.set_xlabel(r'$t / \omega$')
 
     ax.legend()
     plt.show()
