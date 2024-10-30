@@ -303,38 +303,40 @@ def interactive_plot_from_file():
     t_values = np.load('parameters_to_circle_fit/run_1_t.npy')
     lmbda_values = np.load('parameters_to_circle_fit/run_1_lmbda.npy')
 
+    r"""
     ### left plot in lambda
-    # ax = axes[0]
+    ax = axes[0]
     # smallest value of t
-    # t = t_values[0]
-    # a, b, a_std, b_std = load_for_specific_t(0)
-    # ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls=':')
+    t = t_values[0]
+    a, b, a_std, b_std = load_for_specific_t(0)
+    ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls=':')
     # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    # ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls=':')
+    ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls=':')
     # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
     # largest value of t
-    # t = t_values[20]
-    # a, b, a_std, b_std = load_for_specific_t(20)
-    # ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls='--')
+    t = t_values[-1]
+    a, b, a_std, b_std = load_for_specific_t(-1)
+    ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls='--')
     # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    # ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls='--')
+    ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls='--')
     # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
 
     ### right plot in t
-    # ax = axes[1]
+    ax = axes[1]
     # smallest value of lmbda
-    # lmbda = lmbda_values[0]
-    # a, b, a_std, b_std = load_for_specific_lmbda(0)
-    # ax.plot(t_values, a, label=f'$a, {lmbda=:.3f}$', color='b', ls=':')
+    lmbda = lmbda_values[0]
+    a, b, a_std, b_std = load_for_specific_lmbda(0)
+    # ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls=':')
     # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    # ax.plot(t_values, b, label=f'$b, {lmbda=:.3f}$', color='r', ls=':')
+    ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls=':')
     # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
     # largest value of lmbda
-    # lmbda = lmbda_values[-1]
-    # a, b, a_std, b_std = load_for_specific_lmbda(-1)
-    # ax.plot(t_values, a, label=f'$a, {lmbda=:.3f}$', color='b', ls='--')
+    lmbda = lmbda_values[-1]
+    a, b, a_std, b_std = load_for_specific_lmbda(-1)
+    ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls='--')
     # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    # ax.plot(t_values, b, label=f'$b, {lmbda=:.3f}$', color='r', ls='--')
+    ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls='--')
+    """
     # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
 
     # add axes for the sliders
@@ -369,30 +371,28 @@ def interactive_plot_from_file():
     t = t_values[slider_t.val]
     a, b, a_std, b_std = load_for_specific_t(slider_t.val)
     plots_left = [
-        axes[0].plot(lmbda_values, a, label=f'$a$', color='b', ls='-'),
-        # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5),
-        axes[0].plot(lmbda_values, b, label=f'$b$', color='r', ls='-'),
-        # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+        axes[0].plot(lmbda_values, a, label='$a$', color='b', ls='-'),
+        axes[0].fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5),
+        axes[0].plot(lmbda_values, b, label='$b$', color='r', ls='-'),
+        axes[0].fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
     ]
     # plot lines for adjustable value of t
     lmbda = lmbda_values[slider_lmbda.val]
     a, b, a_std, b_std = load_for_specific_lmbda(slider_lmbda.val)
     plots_right = [
-        axes[1].plot(t_values, a, label=f'$a$', color='b', ls='-'),
-        # axes[1].fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5),
-        axes[1].plot(t_values, b, label=f'$b$', color='r', ls='-'),
-        # axes[1].fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+        axes[1].plot(t_values, a, label='$a$', color='b', ls='-'),
+        axes[1].fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5),
+        axes[1].plot(t_values, b, label='$b$', color='r', ls='-'),
+        axes[1].fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
     ]
 
-    legends = [
-        axes[0].legend(),
-        axes[1].legend()
-    ]
+    axes[0].legend(loc='upper left')
+    axes[1].legend(loc='upper left')
     axes[0].set_title(r'Scaling in $\lambda$ with ' f'${t = :.3f}$')
     axes[1].set_title(r'Scaling in $t$ with $\lambda = ' f'{lmbda:.3f}$')
     axes[0].set_xlabel(r'$\lambda$')
     axes[1].set_xlabel(r'$t / \omega$')
-    axes[0].set_ylim([-0.1, 4.1])
+    axes[0].set_ylim([-0.1, 5.1])
     axes[1].set_ylim([-0.1, 4.1])
     axes[0].grid(True)
     axes[1].grid(True)
@@ -400,22 +400,56 @@ def interactive_plot_from_file():
     def update_left(_):
         t = t_values[slider_t.val]
         a, b, a_std, b_std = load_for_specific_t(slider_t.val)
+
         plots_left[0][0].set_ydata(a)
-        # lines_left[1].remove()
-        # lines_left[1] = axes[0].fill_between(
-            # lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5
-        # )
-        # plots_left[2][0].set_ydata(b)
-        plots_left[1][0].set_ydata(b)
-        # lines_left[3].remove()
-        # lines_left[3] = axes[0].fill_between(
-            # lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5
-        # )
+
+        # create invisible dummy object to extract the vertices
+        dummy = axes[0].fill_between(
+            lmbda_values, a - a_std, a + a_std, alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        # update the vertices of the PolyCollection
+        plots_left[1].set_paths([dp.vertices])
+
+        plots_left[2][0].set_ydata(b)
+
+        # create invisible dummy object to extract the vertices
+        dummy = axes[0].fill_between(
+            lmbda_values, b - b_std, b + b_std, alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        # update the vertices of the PolyCollection
+        plots_left[3].set_paths([dp.vertices])
+
         axes[0].set_title(r'Scaling in $\lambda$ with ' f'${t = :.3f}$')
         fig.canvas.draw_idle()
 
     def update_right(_):
-        pass
+        lmbda = lmbda_values[slider_lmbda.val]
+        axes[1].set_title(r'Scaling in $t$ with $\lambda = ' f'{lmbda:.3f}$')
+        a, b, a_std, b_std = load_for_specific_lmbda(slider_lmbda.val)
+
+        plots_right[0][0].set_ydata(a)
+
+        # create invisible dummy object to extract the vertices
+        dummy = axes[1].fill_between(
+            t_values, a - a_std, a + a_std, alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        # update the vertices of the PolyCollection
+        plots_right[1].set_paths([dp.vertices])
+
+        plots_right[2][0].set_ydata(b)
+
+        # create invisible dummy object to extract the vertices
+        dummy = axes[1].fill_between(
+            t_values, b - b_std, b + b_std, alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        # update the vertices of the PolyCollection
+        plots_right[3].set_paths([dp.vertices])
+
+        fig.canvas.draw_idle()
 
     slider_t.on_changed(update_left)
     slider_lmbda.on_changed(update_right)
