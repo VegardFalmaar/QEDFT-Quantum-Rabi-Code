@@ -1,5 +1,9 @@
+from pathlib import Path
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button, Slider
 from scipy.optimize import curve_fit    # type: ignore
 
 from quantum_rabi import QuantumRabi
@@ -158,17 +162,17 @@ def plot_parameters():
         perr = np.sqrt(np.diag(pcov))
         return ellipsis_params, perr
 
-    t = 1.0 * omega
-    # g = 1.0 * omega**(3/2)
+    # t = 1.0 * omega
+    g = 1.0 * omega**(3/2)
 
-    x_values = np.linspace(0.1, 3.0, 40)
+    x_values = np.linspace(0.05, 0.15, 3)
 
     a_values = np.zeros_like(x_values)
     b_values = np.zeros_like(x_values)
     a_std_values = np.zeros_like(x_values)
     b_std_values = np.zeros_like(x_values)
-    # for i, t in enumerate(x_values):
-    for i, g in enumerate(x_values):
+    # for i, g in enumerate(x_values):
+    for i, t in enumerate(x_values):
         (a, b), (a_std, b_std) = fit()
         # (a, b, d), (a_std, b_std, d_std) = fit()
         a_values[i] = a
@@ -183,21 +187,253 @@ def plot_parameters():
     # ax.plot(x_values, d_values, label='d', color='r')
     # ax.fill_between(x_values, d_values - d_std, d_values + d_std, color='r', alpha=0.5)
 
-    # t_values = x_values
-    # ax.plot(x_values, a_values, label=r'$a$', color='b')
-    # ax.plot(x_values, b_values / t_values, label=r'$b / t$', color='g')
+    t_values = x_values
+    ax.plot(x_values, a_values, label=r'$a$', color='b')
+    ax.plot(x_values, b_values / t_values, label=r'$b / t$', color='g')
 
-    ax.plot(x_values, a_values, label=r'$a$')
-    ax.plot(x_values, b_values, label=r'$b$')
+    # ax.plot(x_values, a_values, label=r'$a$')
+    # ax.plot(x_values, b_values, label=r'$b$')
 
     ax.set_title(r'$T_c^\lambda = \frac{b}{a} \left( \sqrt{a^2 - \sigma^2} - \sqrt{a^2 - 1} \right)$')
-    ax.set_xlabel(r'$\lambda g / \omega^{3/2}$')
-    # ax.set_xlabel(r'$t / \omega$')
+    # ax.set_xlabel(r'$\lambda g / \omega^{3/2}$')
+    ax.set_xlabel(r'$t / \omega$')
 
     ax.legend()
     plt.show()
 
+
+def prepare_data():
+    folder = Path('parameters_to_circle_fit')
+    omega = 1.0
+    sigma_values = sigma_values_from_logspace()[1:-1]
+
+    def fit():
+        y = np.zeros_like(sigma_values)
+        for i, sigma in enumerate(sigma_values):
+            qr = QuantumRabi(omega, t, g, lmbda=1)
+            T = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0)
+            y[i] = T
+
+        ellipsis_params, pcov = curve_fit(
+            ellipse_fit,
+            sigma_values,
+            y,
+            bounds=([1, -np.inf], [np.inf, np.inf]),
+        )
+        perr = np.sqrt(np.diag(pcov))
+        return ellipsis_params, perr
+
+    t_values = np.linspace(0.05, 3.0, 60)
+    g_values = np.linspace(0.00, 2.5, 51)
+    # t_values = np.linspace(0.05, 3.0, 2)
+    # g_values = np.linspace(0.0, 2.5, 2)
+    np.save(folder / 'run_1_t', t_values)
+    np.save(folder / 'run_1_lmbda', g_values)
+
+    a_values = np.zeros((len(t_values), len(g_values)))
+    b_values = np.zeros_like(a_values)
+    a_std_values = np.zeros_like(a_values)
+    b_std_values = np.zeros_like(a_values)
+
+    total_iterations = len(t_values) * len(g_values)
+    bar = StatusBar(total_iterations)
+    for i, t in enumerate(t_values):
+        for j, g in enumerate(g_values):
+            bar.write(f'Starting {t = :.3f}, {g = :.3f}')
+            try:
+                (a, b), (a_std, b_std) = fit()
+            except ValueError as e:
+                print(f'Error: {e}')
+            # (a, b, d), (a_std, b_std, d_std) = fit()
+            a_values[i, j] = a
+            b_values[i, j] = b
+            a_std_values[i, j] = a_std
+            b_std_values[i, j] = b_std
+    bar.write('Done!')
+
+    np.save(folder / 'run_1_a', a_values)
+    np.save(folder / 'run_1_b', b_values)
+    np.save(folder / 'run_1_a_std', a_std_values)
+    np.save(folder / 'run_1_b_std', b_std_values)
+
+
+class StatusBar():
+    def __init__(self, total: int):
+        self.total = total
+        self.counter = 0
+        self.start_time = int(time.perf_counter())
+
+    def write(self, msg: str):
+        pbar_length = 30
+        num_progress_bars = pbar_length * self.counter // self.total
+        progress = self.counter / self.total
+        t = int(time.perf_counter()) - self.start_time
+        total_t = int(t / progress) if self.counter > 0 else 0
+        line = '[' + '#'*num_progress_bars + ' '*(pbar_length - num_progress_bars) \
+            + f'] {progress*100:5.1f} % ' \
+            + f'({t//60:3d}:{t%60:02d} / {total_t//60:3d}:{total_t%60:02d})  ' \
+            + f'({msg})'
+        print(line)
+        self.counter += 1
+
+
+def interactive_plot_from_file():
+    fig, axes = plt.subplots(figsize=(18, 8), nrows=1, ncols=2)
+    fig.subplots_adjust(bottom=0.3)
+    fig.suptitle(r'$T_c^\lambda = \frac{b}{a} ' \
+        r'\left( \sqrt{a^2 - \sigma^2} - \sqrt{a^2 - 1} \right)$'
+    )
+
+    def load_for_specific_t(idx):
+        return (
+            np.load('parameters_to_circle_fit/run_1_a.npy')[idx, :],
+            np.load('parameters_to_circle_fit/run_1_b.npy')[idx, :],
+            np.load('parameters_to_circle_fit/run_1_a_std.npy')[idx, :],
+            np.load('parameters_to_circle_fit/run_1_b_std.npy')[idx, :]
+        )
+
+    def load_for_specific_lmbda(idx):
+        return (
+            np.load('parameters_to_circle_fit/run_1_a.npy')[:, idx],
+            np.load('parameters_to_circle_fit/run_1_b.npy')[:, idx],
+            np.load('parameters_to_circle_fit/run_1_a_std.npy')[:, idx],
+            np.load('parameters_to_circle_fit/run_1_b_std.npy')[:, idx]
+        )
+
+    t_values = np.load('parameters_to_circle_fit/run_1_t.npy')
+    lmbda_values = np.load('parameters_to_circle_fit/run_1_lmbda.npy')
+
+    ### left plot in lambda
+    # ax = axes[0]
+    # smallest value of t
+    # t = t_values[0]
+    # a, b, a_std, b_std = load_for_specific_t(0)
+    # ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls=':')
+    # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
+    # ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls=':')
+    # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+    # largest value of t
+    # t = t_values[20]
+    # a, b, a_std, b_std = load_for_specific_t(20)
+    # ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls='--')
+    # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
+    # ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls='--')
+    # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+
+    ### right plot in t
+    # ax = axes[1]
+    # smallest value of lmbda
+    # lmbda = lmbda_values[0]
+    # a, b, a_std, b_std = load_for_specific_lmbda(0)
+    # ax.plot(t_values, a, label=f'$a, {lmbda=:.3f}$', color='b', ls=':')
+    # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
+    # ax.plot(t_values, b, label=f'$b, {lmbda=:.3f}$', color='r', ls=':')
+    # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+    # largest value of lmbda
+    # lmbda = lmbda_values[-1]
+    # a, b, a_std, b_std = load_for_specific_lmbda(-1)
+    # ax.plot(t_values, a, label=f'$a, {lmbda=:.3f}$', color='b', ls='--')
+    # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
+    # ax.plot(t_values, b, label=f'$b, {lmbda=:.3f}$', color='r', ls='--')
+    # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+
+    # add axes for the sliders
+    # fig.add_axes([
+        # horisontal start position from left,
+        # vertical start position from bottom,
+        # width of the ax panel,
+        # height of the ax panel,
+    # ])
+    ax_t_slider = fig.add_axes((0.1, 0.15, 0.25, 0.03))
+    ax_lmbda_slider = fig.add_axes((0.1, 0.1, 0.25, 0.03))
+
+    # create the sliders
+    slider_t = Slider(
+        ax_t_slider,
+        r'Index $t$',
+        valmin=0,
+        valmax=len(t_values) - 1,
+        valinit=len(t_values) // 2,
+        valstep=1,
+    )
+    slider_lmbda = Slider(
+        ax_lmbda_slider,
+        r'Index $\lambda$',
+        valmin=0,
+        valmax=len(lmbda_values) - 1,
+        valinit=len(lmbda_values) // 2,
+        valstep=1,
+    )
+
+    # plot lines for adjustable value of t
+    t = t_values[slider_t.val]
+    a, b, a_std, b_std = load_for_specific_t(slider_t.val)
+    plots_left = [
+        axes[0].plot(lmbda_values, a, label=f'$a$', color='b', ls='-'),
+        # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5),
+        axes[0].plot(lmbda_values, b, label=f'$b$', color='r', ls='-'),
+        # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+    ]
+    # plot lines for adjustable value of t
+    lmbda = lmbda_values[slider_lmbda.val]
+    a, b, a_std, b_std = load_for_specific_lmbda(slider_lmbda.val)
+    plots_right = [
+        axes[1].plot(t_values, a, label=f'$a$', color='b', ls='-'),
+        # axes[1].fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5),
+        axes[1].plot(t_values, b, label=f'$b$', color='r', ls='-'),
+        # axes[1].fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+    ]
+
+    legends = [
+        axes[0].legend(),
+        axes[1].legend()
+    ]
+    axes[0].set_title(r'Scaling in $\lambda$ with ' f'${t = :.3f}$')
+    axes[1].set_title(r'Scaling in $t$ with $\lambda = ' f'{lmbda:.3f}$')
+    axes[0].set_xlabel(r'$\lambda$')
+    axes[1].set_xlabel(r'$t / \omega$')
+    axes[0].set_ylim([-0.1, 4.1])
+    axes[1].set_ylim([-0.1, 4.1])
+    axes[0].grid(True)
+    axes[1].grid(True)
+
+    def update_left(_):
+        t = t_values[slider_t.val]
+        a, b, a_std, b_std = load_for_specific_t(slider_t.val)
+        plots_left[0][0].set_ydata(a)
+        # lines_left[1].remove()
+        # lines_left[1] = axes[0].fill_between(
+            # lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5
+        # )
+        # plots_left[2][0].set_ydata(b)
+        plots_left[1][0].set_ydata(b)
+        # lines_left[3].remove()
+        # lines_left[3] = axes[0].fill_between(
+            # lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5
+        # )
+        axes[0].set_title(r'Scaling in $\lambda$ with ' f'${t = :.3f}$')
+        fig.canvas.draw_idle()
+
+    def update_right(_):
+        pass
+
+    slider_t.on_changed(update_left)
+    slider_lmbda.on_changed(update_right)
+
+    ax_reset = fig.add_axes((0.25, 0.025, 0.1, 0.04))
+    button = Button(ax_reset, 'Reset', hovercolor='0.975')
+
+    def reset(_):
+        slider_t.reset()
+        slider_lmbda.reset()
+    button.on_clicked(reset)
+
+    plt.show()
+
+
 if __name__ == '__main__':
     # plot_in_sigma()
     # tabulate_parameters()
-    plot_parameters()
+    # plot_parameters()
+    # prepare_data()
+    interactive_plot_from_file()
