@@ -1,4 +1,5 @@
 import pytest
+import scipy    # type: ignore
 
 from quantum_rabi import QuantumRabi
 
@@ -119,7 +120,31 @@ def test_thm_5_1(omega, t, g, sigma, xi, lmbda):
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('lmbda', lmbda_values)
 def test_cor_5_3(omega, t, g, sigma, lmbda):
+    # TODO: finish this test
     LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G(sigma)
     def integrand(nu):
         pass
     RHS = scipy.integrate.quad(integrand, 0, lmbda)[0] / lmbda
+
+
+@pytest.mark.parametrize('omega', omega_values)
+@pytest.mark.parametrize('t', t_values)
+@pytest.mark.parametrize('g', g_values)
+@pytest.mark.parametrize('sigma', sigma_values)
+@pytest.mark.parametrize('xi', xi_values)
+def test_eq_40(omega, t, g, sigma, xi):
+    qr = QuantumRabi(omega, t, g, lmbda=1.0, oscillator_size=OSCILLATOR_SIZE)
+    v, j = qr.minimizer_potential(sigma=sigma, xi=xi)
+    op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
+    eigenvectors = op_H.eig(hermitian=True)['eigenvectors']
+    # v = eigenvectors[0]
+    for v in eigenvectors[:15]:
+        LHS = omega**2 * (qr.op_sigma_z*qr.op_x).expval(v) \
+            + 2 * t * (qr.op_sigma_y*qr.op_p).expval(v) \
+            + g + j*qr.op_sigma_z.expval(v)
+        RHS = 0.0
+        assert LHS.imag < TOL
+        assert LHS.real - RHS < TOL
+
+if __name__ == '__main__':
+    test_eq_40(1, 1, 1, 0.3, 0.1)
