@@ -1,5 +1,4 @@
-from qmodel import *
-from dft import *
+import qmodel as q 
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -40,8 +39,8 @@ def compute_approximation(sigma_space, lam, x, eta):
 
 def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     # Setup basis and operators
-    b_oscillator = NumberBasis(oscillator_size)
-    b_spin = SpinBasis()
+    b_oscillator = q.NumberBasis(oscillator_size)
+    b_spin = q.SpinBasis()
     b = b_oscillator.tensor(b_spin)
 
     # Define operators within the function scope
@@ -56,8 +55,8 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     CouplingRabi = x_op * sigma_z
 
     # Energy functionals
-    E_KS = EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
-    E_full = EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
+    E_KS = q.EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
+    E_full = q.EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
 
     # Define sigma_space for full range and for derivative calculation
     sigma_space = np.linspace(-0.95, 0.95, 201)
@@ -122,8 +121,8 @@ def main():
     eta_tangent_values = []
 
     # Setup basis and operators once outside the loop
-    b_oscillator = NumberBasis(oscillator_size)
-    b_spin = SpinBasis()
+    b_oscillator = q.NumberBasis(oscillator_size)
+    b_spin = q.SpinBasis()
     b = b_oscillator.tensor(b_spin)
     num_op = b_oscillator.diag().extend(b)
     x_op = b_oscillator.x_operator().extend(b)
@@ -140,8 +139,8 @@ def main():
         H0_Rabi_KS = num_op + 0.5 - t * sigma_x
         CouplingRabi = x_op * sigma_z
 
-        E_KS = EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
-        E_full = EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
+        E_KS = q.EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
+        E_full = q.EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
 
         # Compute v_Hxc at sigma values around sigma=0
         vxc_deriv = compute_v_hxc(sigma_space_deriv, lam, x, t, E_KS, E_full, sigma_x, x_op)
