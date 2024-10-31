@@ -270,7 +270,7 @@ def precompute_data():
     np.save(folder / f'run_{run}_T', T_values)
 
 
-def interactive_plot_of_ellipse_params():
+def interactive_plot_of_ellipse_params(show_extreme_values: bool = False):
     fig, axes = plt.subplots(figsize=(18, 8), nrows=1, ncols=2)
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle(r'$T_c^\lambda = \frac{b}{a} ' \
@@ -296,41 +296,44 @@ def interactive_plot_of_ellipse_params():
     t_values = np.load('parameters_to_circle_fit/run_1_t.npy')
     lmbda_values = np.load('parameters_to_circle_fit/run_1_lmbda.npy')
 
-    r"""
-    ### left plot in lambda
-    ax = axes[0]
-    # smallest value of t
-    t = t_values[0]
-    a, b, a_std, b_std = load_for_specific_t(0)
-    ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls=':')
-    # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls=':')
-    # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
-    # largest value of t
-    t = t_values[-1]
-    a, b, a_std, b_std = load_for_specific_t(-1)
-    ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls='--')
-    # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls='--')
-    # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+    if show_extreme_values:
+        ### left plot in lambda
+        ax = axes[0]
 
-    ### right plot in t
-    ax = axes[1]
-    # smallest value of lmbda
-    lmbda = lmbda_values[0]
-    a, b, a_std, b_std = load_for_specific_lmbda(0)
-    # ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls=':')
-    # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls=':')
-    # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
-    # largest value of lmbda
-    lmbda = lmbda_values[-1]
-    a, b, a_std, b_std = load_for_specific_lmbda(-1)
-    ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls='--')
-    # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
-    ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls='--')
-    """
-    # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+        # smallest value of t
+        t = t_values[0]
+        a, b, a_std, b_std = load_for_specific_t(0)
+        ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls=':')
+        # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
+        ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls=':')
+        # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+
+        # largest value of t
+        t = t_values[-1]
+        a, b, a_std, b_std = load_for_specific_t(-1)
+        ax.plot(lmbda_values, a, label=f'$a, {t=:.3f}$', color='b', ls='--')
+        # ax.fill_between(lmbda_values, a - a_std, a + a_std, color='b', alpha=0.5)
+        ax.plot(lmbda_values, b, label=f'$b, {t=:.3f}$', color='r', ls='--')
+        # ax.fill_between(lmbda_values, b - b_std, b + b_std, color='r', alpha=0.5)
+
+        ### right plot in t
+        ax = axes[1]
+
+        # smallest value of lmbda
+        lmbda = lmbda_values[0]
+        a, b, a_std, b_std = load_for_specific_lmbda(0)
+        # ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls=':')
+        # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
+        ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls=':')
+        # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
+
+        # largest value of lmbda
+        lmbda = lmbda_values[-1]
+        a, b, a_std, b_std = load_for_specific_lmbda(-1)
+        ax.plot(t_values, a, label=r'$a, \lambda=' f'{lmbda:.3f}$', color='b', ls='--')
+        # ax.fill_between(t_values, a - a_std, a + a_std, color='b', alpha=0.5)
+        ax.plot(t_values, b, label=r'$b, \lambda=' f'{lmbda:.3f}$', color='r', ls='--')
+        # ax.fill_between(t_values, b - b_std, b + b_std, color='r', alpha=0.5)
 
     # add axes for the sliders
     # fig.add_axes([
@@ -474,13 +477,6 @@ def interactive_plot_in_sigma():
     b_values = np.load('parameters_to_circle_fit/run_1_b.npy')[::3, ::3]
     T_values = np.load('parameters_to_circle_fit/run_1_T-every-third.npy')
 
-    # add axes for the sliders
-    # fig.add_axes([
-        # horisontal start position from left,
-        # vertical start position from bottom,
-        # width of the ax panel,
-        # height of the ax panel,
-    # ])
     ax_t_slider = fig.add_axes((0.1, 0.15, 0.25, 0.03))
     ax_lmbda_slider = fig.add_axes((0.1, 0.1, 0.25, 0.03))
 
