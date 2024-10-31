@@ -1,5 +1,6 @@
 import pytest
 import scipy    # type: ignore
+import numpy as np
 
 from quantum_rabi import QuantumRabi
 
@@ -23,6 +24,8 @@ sigma_values = [-0.7, 0.3]
 xi_values = [-0.15, 0.0, 0.2]
 zeta_values = [-0.9, 0.6]
 lmbda_values = [0.0, 0.5, 1.0]
+v_values = np.linspace(-0.5, 0.5, 5)
+j_values = np.linspace(-0.5, 0.5, 4)
 
 
 @pytest.mark.parametrize('omega', omega_values)
@@ -130,18 +133,17 @@ def test_cor_5_3(omega, t, g, sigma, lmbda):
 @pytest.mark.parametrize('omega', omega_values)
 @pytest.mark.parametrize('t', t_values)
 @pytest.mark.parametrize('g', g_values)
-@pytest.mark.parametrize('sigma', sigma_values)
-@pytest.mark.parametrize('xi', xi_values)
-def test_eq_40(omega, t, g, sigma, xi):
+@pytest.mark.parametrize('v', v_values)
+@pytest.mark.parametrize('j', j_values)
+def test_eq_40(omega, t, g, v, j):
     qr = QuantumRabi(omega, t, g, lmbda=1.0, oscillator_size=OSCILLATOR_SIZE)
-    v, j = qr.minimizer_potential(sigma=sigma, xi=xi)
     op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
     eigenvectors = op_H.eig(hermitian=True)['eigenvectors']
     # v = eigenvectors[0]
-    for v in eigenvectors[:15]:
-        LHS = omega**2 * (qr.op_sigma_z*qr.op_x).expval(v) \
-            + 2 * t * (qr.op_sigma_y*qr.op_p).expval(v) \
-            + g + j*qr.op_sigma_z.expval(v)
+    for eigenvector in eigenvectors[:15]:
+        LHS = omega**2 * (qr.op_sigma_z*qr.op_x).expval(eigenvector) \
+            + 2 * t * (qr.op_sigma_y*qr.op_p).expval(eigenvector) \
+            + g + j*qr.op_sigma_z.expval(eigenvector)
         RHS = 0.0
         assert LHS.imag < TOL
         assert LHS.real - RHS < TOL
