@@ -551,31 +551,5 @@ def interactive_plot_in_sigma():
     plt.show()
 
 
-def compute_T_for_all_t_lmbda():
-    t_values = np.load('parameters_to_circle_fit/run_1_t.npy')[::3]
-    lmbda_values = np.load('parameters_to_circle_fit/run_1_lmbda.npy')[::3]
-    sigma_values = sigma_values_from_logspace()
-
-    T_values = np.zeros((len(t_values), len(lmbda_values), len(sigma_values)))
-    def calculate():
-        for k, sigma in enumerate(sigma_values):
-            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda)
-            T = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0)
-            T_values[i, j, k] = T
-
-    total_iterations = T_values.shape[0] * T_values.shape[1]
-    bar = ProgressBar(total_iterations)
-    for i, t in enumerate(t_values):
-        for j, lmbda in enumerate(lmbda_values):
-            bar.write(f'Starting {t = :.3f}, {lmbda = :.3f}')
-            try:
-                calculate()
-            except ValueError as e:
-                print(f'Error: {e}')
-    bar.write('Done!')
-    folder = Path('parameters_to_circle_fit')
-    np.save(folder / 'run_1_T-every-third', T_values)
-
-
 if __name__ == '__main__':
     interactive_plot_in_sigma()
