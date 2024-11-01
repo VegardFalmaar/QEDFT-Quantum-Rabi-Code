@@ -1,10 +1,13 @@
-import qmodel as q 
+import qmodel as q
 import matplotlib.pyplot as plt
 import numpy as np
+from plot_config import PlotConfig  # Import the PlotConfig class
+
+# Enable LaTeX in plots using PlotConfig
+PlotConfig.use_tex()
 
 # Define the check_sigma_x function with adjusted error tolerance
 def check_sigma_x(lam, sigma, x, j):
-    # Adjusted error threshold to 1e-3
     if abs(lam * sigma + j + x) > 1e-3:
         print(f'sigma--xi check: FAIL at lam={lam}, sigma={sigma}, xi={x}, j={j}! '
               'Maybe increase oscillator_size value')
@@ -44,14 +47,14 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     b = b_oscillator.tensor(b_spin)
 
     # Define operators within the function scope
-    num_op = b_oscillator.diag().extend(b)  # Number operator for oscillator
+    num_op = b_oscillator.diag().extend(b)
     x_op = b_oscillator.x_operator().extend(b)
     p_op = -1j * b_oscillator.dx_operator().extend(b)
     sigma_z = b_spin.sigma_z().extend(b)
     sigma_x = b_spin.sigma_x().extend(b)
     sigma_y = b_spin.sigma_y().extend(b)
 
-    H0_Rabi_KS = num_op + 0.5 - t * sigma_x  # With 1/2 in harmonic oscillator
+    H0_Rabi_KS = num_op + 0.5 - t * sigma_x
     CouplingRabi = x_op * sigma_z
 
     # Energy functionals
@@ -60,7 +63,7 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
 
     # Define sigma_space for full range and for derivative calculation
     sigma_space = np.linspace(-0.95, 0.95, 201)
-    sigma_space_deriv = np.linspace(-0.01, 0.01, 5)  # Focused around zero for derivative calculation
+    sigma_space_deriv = np.linspace(-0.01, 0.01, 5)
 
     # Compute exact v_Hxc over full sigma_space
     vxc = compute_v_hxc(sigma_space, lam, x, t, E_KS, E_full, sigma_x, x_op)
@@ -72,7 +75,7 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
 
     # Compute derivative of v_Hxc at sigma = 0 using central difference
     delta_sigma = sigma_space_deriv[1] - sigma_space_deriv[0]
-    dvxc_dsigma = (vxc_deriv[2] - vxc_deriv[0]) / (2 * delta_sigma)  # Using points around sigma=0
+    dvxc_dsigma = (vxc_deriv[2] - vxc_deriv[0]) / (2 * delta_sigma)
 
     # Compute eta for tangency
     eta_tangent = dvxc_dsigma / lam**2
@@ -82,18 +85,44 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     vx_eta_tangent = compute_approximation(sigma_space, lam, x, eta_tangent)
     vx_eta_tangent = np.real(vx_eta_tangent)
 
-    # Plotting
-    plt.figure()
-    plt.plot(sigma_space, vxc, 'r-', label=r'$v_{\mathrm{Hxc}}$ (Exact)')
-    plt.plot(sigma_space, vx_eta_tangent, 'g--', label=rf'Approximation with $\eta_c={eta_tangent:.2f}$')
-    plt.xlabel(r'$\sigma$')
-    plt.ylabel(r'$v$')
-    plt.title(r'$v_{{\mathrm{{Hxc}}}}$ and Approximation for $\lambda={}$'.format(lam))
-    plt.legend()
-    plt.grid(True)
-    plt.tight_layout()
+    # Plotting using PlotConfig
+    fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
+
+    # Plot exact v_Hxc
+    ax.plot(
+        sigma_space,
+        vxc,
+        linestyle=PlotConfig.line_styles[0],
+        color=PlotConfig.colors[0],
+        linewidth=PlotConfig.linewidth,
+        label=r'Exact $v_{\mathrm{Hxc}}$'
+    )
+
+    # Plot approximation with eta_tangent
+    ax.plot(
+        sigma_space,
+        vx_eta_tangent,
+        linestyle=PlotConfig.line_styles[1],
+        color=PlotConfig.colors[1],
+        linewidth=PlotConfig.linewidth,
+        label=rf'Approximation with $\eta_c={eta_tangent:.2f}$'
+    )
+
+    # Set axis information using PlotConfig
+    PlotConfig.set_ax_info(
+        ax,
+        xlabel=r'$\sigma$',
+        ylabel=r'$v$',
+        title=rf'$v_{{\mathrm{{Hxc}}}}$ and Approximation for $\lambda={lam}$',
+        legend=True
+    )
+
+    ax.grid(True)
+    PlotConfig.tight_layout(fig)
+
     # Save the plot before showing it
-    plt.savefig('v_hxc_lambda_{}.pdf'.format(lam), format='pdf')
+    fig.savefig(f'v_hxc_lambda_{lam}.pdf', format='pdf')
+    fig.savefig(f'v_hxc_lambda_{lam}.eps', format='eps')
     plt.show()
 
 def main():
@@ -102,21 +131,21 @@ def main():
 
     # Plot 1: λ = 1
     lam1 = 1
-    oscillator_size1 = 30  # Default size is sufficient
+    oscillator_size1 = 30
     print(f"Generating Plot 1 for λ = {lam1}")
     plot_v_hxc_vs_approximations(lam1, x, t, oscillator_size1)
 
     # Plot 2: λ = 3
     lam2 = 3
-    oscillator_size2 = 50  # Increase oscillator_size for better accuracy
+    oscillator_size2 = 50
     print(f"Generating Plot 2 for λ = {lam2}")
     plot_v_hxc_vs_approximations(lam2, x, t, oscillator_size2)
 
     # Now compute η vs λ and plot
-    oscillator_size = 50  # Use a reasonable oscillator size for accuracy
+    oscillator_size = 50
 
     # Define a range of lambda values
-    lam_values = np.linspace(0.1, 3.0, 50)  # 50 points from 0.1 to 3.0
+    lam_values = np.linspace(0.1, 3.0, 50)
 
     eta_tangent_values = []
 
@@ -143,7 +172,8 @@ def main():
         E_full = q.EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
 
         # Compute v_Hxc at sigma values around sigma=0
-        vxc_deriv = compute_v_hxc(sigma_space_deriv, lam, x, t, E_KS, E_full, sigma_x, x_op)
+        vxc_deriv = compute_v_hxc(
+            sigma_space_deriv, lam, x, t, E_KS, E_full, sigma_x, x_op)
         vxc_deriv = np.real(vxc_deriv)
 
         # Compute derivative
@@ -157,19 +187,33 @@ def main():
     lam_values = np.array(lam_values)
     eta_tangent_values = np.array(eta_tangent_values)
 
-    # Now plot η_tangent versus lam_values
-    plt.figure()
-    plt.plot(lam_values, eta_tangent_values, 'bo-', label=r'$\eta$ vs $\lambda$')
-    plt.xlabel(r'$\lambda$')
-    plt.ylabel(r'$\eta$ (tangent at $\sigma=0$)')
-    plt.title(r'Relationship between $\lambda$ and $\eta$')
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig('eta_vs_lambda.pdf')
+    # Plot η_tangent versus lam_values using PlotConfig
+    fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
+
+    ax.plot(
+        lam_values,
+        eta_tangent_values,
+        linestyle='-',
+        marker='o',
+        color=PlotConfig.colors[0],
+        linewidth=PlotConfig.linewidth,
+        label=r'$\eta$ vs $\lambda$'
+    )
+
+    PlotConfig.set_ax_info(
+        ax,
+        xlabel=r'$\lambda$',
+        ylabel=r'$\eta$ (tangent at $\sigma=0$)',
+        title=r'Relationship between $\lambda$ and $\eta$',
+        legend=True
+    )
+
+    ax.grid(True)
+    PlotConfig.tight_layout(fig)
+
+    fig.savefig('eta_vs_lambda.pdf', format='pdf')
+    fig.savefig('eta_vs_lambda.eps', format='eps')
     plt.show()
 
 if __name__ == "__main__":
     main()
-
-
