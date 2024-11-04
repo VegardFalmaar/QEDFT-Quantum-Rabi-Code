@@ -3,10 +3,13 @@ code for QRabi model paper plot
 compare spectra of the QRabi model and the photon-free Hamiltonian
 also compare expectation values for 'densities' and parts of the Hamiltonian
 '''
+from math import sqrt
+
 import matplotlib.pyplot as plt
 import numpy as np
-from math import sqrt
-from qmodel import NumberBasis, SpinBasis
+from qmodel import NumberBasis, SpinBasis   # type: ignore
+
+from plot_config import PlotConfig as PC
 
 om = 1
 t = 1
@@ -58,19 +61,19 @@ for g in g_span:
     p_pf = 2*g*t/om**2*sigma_y_pf
     # alternative way of writing H_pf with photon-free operators
     # H_pf = 1/2*om**2*x_pf**2  + om/2 - t*sigma_x_pf + g*x_pf*sigma_z_pf + v*sigma_z_pf + j*x_pf
-    
+
     res_QR = H_QR.eig(hermitian = True)
     res_pf = H_pf.eig(hermitian = True)
-    
+
     spec_QR.append(res_QR['eigenvalues'][0:10]) # lowest 10 eigenvalues
     spec_pf.append(res_pf['eigenvalues']) # both eigenvalues
-    
+
     # ground states
     Psi_QR = res_QR['eigenvectors'][0]
     Psi_pf = res_pf['eigenvectors'][0]
     # check
     check_sigma_x(g, sigma_z.expval(Psi_QR, transform_real=True), x_op.expval(Psi_QR, transform_real=True))
-    
+
     # compare expvals
     d_E.append(spec_QR[-1][0] - spec_pf[-1][0]) # groundstate energy
     d_xi.append(x_op.expval(Psi_QR, transform_real=True) - x_pf.expval(Psi_pf, transform_real=True))
@@ -78,8 +81,8 @@ for g in g_span:
     d_kin.append(-t*sigma_x.expval(Psi_QR, transform_real=True) + t*sigma_x_pf.expval(Psi_pf, transform_real=True))
     d_coupl.append(g*(sigma_z*x_op).expval(Psi_QR, transform_real=True) - g*(sigma_z_pf*x_pf).expval(Psi_pf, transform_real=True))
     d_num.append(num_op.expval(Psi_QR, transform_real=True) - num_pf.expval(Psi_pf, transform_real=True))
-    
-fig, (ax1, ax2) = plt.subplots(2, 1)
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(PC.fig_width, 2*PC.fig_height))
 ax1.plot(g_span, spec_QR, '-k')
 ax1.plot(g_span, spec_pf, '--k')
 
@@ -89,6 +92,5 @@ ax2.plot(g_span, d_sigma, '.k', label=r'$\hat\sigma_z$')
 ax2.plot(g_span, d_kin, 'xk', label=r'$-t\hat\sigma_x$')
 ax2.plot(g_span, d_coupl, 'ok', label=r'$g\hat\sigma_z\hat x$')
 ax2.plot(g_span, d_num, '^k', label=r'$\hat a^\dagger\hat a$')
-ax2.set_xlabel('$g$')
-ax2.legend()
+PC.set_ax_info(ax2, xlabel='$g$', legend=True)
 plt.show()
