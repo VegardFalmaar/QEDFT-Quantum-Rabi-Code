@@ -115,7 +115,7 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         sigma_space,
         vx_eta_tangent,
         linestyle=PlotConfig.line_styles[1],
-        color=PlotConfig.colors[1],
+        color=PlotConfig.colors[0],
         linewidth=PlotConfig.linewidth,
         label=rf'Approximation with $\eta_c={eta_tangent:.2f}$'
     )
@@ -129,7 +129,7 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         legend=True
     )
 
-    ax.grid(True)
+    #ax.grid(True)
     PlotConfig.tight_layout(fig)
 
     # Save the plot before showing it
@@ -225,7 +225,7 @@ def main():
         legend=True
     )
 
-    ax.grid(True)
+    #ax.grid(True)
     PlotConfig.tight_layout(fig)
 
     fig.savefig('eta_vs_lambda.pdf', format='pdf')
