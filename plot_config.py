@@ -44,8 +44,8 @@ class PlotConfig:
     @staticmethod
     def set_ax_info(
         ax: mpl.axes.Axes,
-        xlabel: str,
-        ylabel: str,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         title: str | None = None,
         legend: bool = False
     ):
@@ -60,8 +60,10 @@ class PlotConfig:
             legend (bool, optional): whether or not to add labels/legend
                 default: False
         """
-        ax.set_xlabel(xlabel, fontsize=PlotConfig.fontsize_axis_labels)
-        ax.set_ylabel(ylabel, fontsize=PlotConfig.fontsize_axis_labels)
+        if xlabel is not None:
+            ax.set_xlabel(xlabel, fontsize=PlotConfig.fontsize_axis_labels)
+        if ylabel is not None:
+            ax.set_ylabel(ylabel, fontsize=PlotConfig.fontsize_axis_labels)
         ax.tick_params(
             axis='both',
             which='major',
