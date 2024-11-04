@@ -12,65 +12,77 @@ def check_sigma_x(lam, sigma, x, j):
         print(f'sigma--xi check: FAIL at lam={lam}, sigma={sigma}, xi={x}, j={j}! '
               'Maybe increase oscillator_size value')
 
-def compute_v_hxc(sigma_space, lam, x, t, E_KS, E_full, sigma_x, x_op):
+def compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
     vxc = []
     for sigma in sigma_space:
         # Legendre transforms
-        LT_full = E_full.legendre_transform([sigma, x])
-        LT_KS = E_KS.legendre_transform([sigma, x])
+        # For KS system, only sigma is used (photon-free)
+        LT_KS = E_KS.legendre_transform(sigma)
+        # For full system, both sigma and xi are used
+        LT_full = E_full.legendre_transform([sigma, xi])
 
-        # Check sigma and x consistency
-        check_sigma_x(lam, sigma, x, LT_full['pot'][1])
-        check_sigma_x(0, sigma, x, LT_KS['pot'][1])
+        # Check sigma and xi consistency for full system
+        check_sigma_x(lam, sigma, xi, LT_full['pot'][1])
 
         # Solve for ground states
-        sol_full = E_full.solve(LT_full['pot'])
         sol_KS = E_KS.solve(LT_KS['pot'])
+        sol_full = E_full.solve(LT_full['pot'])
 
-        # Compute v_xc from force-balance equation
-        sigma_x_expval_full = sigma_x.expval(sol_full['gs_vector'])
-        sigma_x_expval_KS = sigma_x.expval(sol_KS['gs_vector'])
-        numerator_full = t * sigma + lam * (x_op * sigma_x).expval(sol_full['gs_vector'])
-        vxc_value = (-t * sigma / sigma_x_expval_KS + numerator_full / sigma_x_expval_full)
+        # Compute expectation values
+        sigma_x_expval_KS = sigma_x_pf.expval(sol_KS['gs_vector'])
+        sigma_x_expval_full = sigma_x_full.expval(sol_full['gs_vector'])
+        x_sigma_x_expval_full = (x_op_full * sigma_x_full).expval(sol_full['gs_vector'])
+
+        # Compute v_Hxc from force-balance equation
+        numerator_full = t * sigma + lam * x_sigma_x_expval_full
+        vxc_value = (-t * sigma / sigma_x_expval_KS) + (numerator_full / sigma_x_expval_full)
         vxc.append(vxc_value)
     return np.array(vxc)
 
-def compute_approximation(sigma_space, lam, x, eta):
-    # Approximation from Eq. (65)
-    vx_eta = lam * x + lam**2 * sigma_space * eta
+def compute_approximation(sigma_space, lam, xi, eta):
+    # Approximation with eta_c
+    vx_eta = lam * xi + lam**2 * sigma_space * eta
     return np.array(vx_eta)
 
-def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
-    # Setup basis and operators
-    b_oscillator = q.NumberBasis(oscillator_size)
+def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
+    # Kohn-Sham system without photons (photon-free)
     b_spin = q.SpinBasis()
+    sigma_z_pf = b_spin.sigma_z()
+    sigma_x_pf = b_spin.sigma_x()
+
+    H0_pf = -t * sigma_x_pf  # KS Hamiltonian without photons
+
+    # Energy functional for KS system
+    E_KS = q.EnergyFunctional(H0_pf, sigma_z_pf)
+
+    # Full system with photons
+    b_oscillator = q.NumberBasis(oscillator_size)
     b = b_oscillator.tensor(b_spin)
 
-    # Define operators within the function scope
-    num_op = b_oscillator.diag().extend(b)
-    x_op = b_oscillator.x_operator().extend(b)
-    p_op = -1j * b_oscillator.dx_operator().extend(b)
-    sigma_z = b_spin.sigma_z().extend(b)
-    sigma_x = b_spin.sigma_x().extend(b)
-    sigma_y = b_spin.sigma_y().extend(b)
+    # Define operators on the full basis
+    num_op_full = b_oscillator.diag().extend(b)
+    x_op_full = b_oscillator.x_operator().extend(b)
+    sigma_z_full = sigma_z_pf.extend(b)
+    sigma_x_full = sigma_x_pf.extend(b)
 
-    H0_Rabi_KS = num_op + 0.5 - t * sigma_x
-    CouplingRabi = x_op * sigma_z
+    H0_full = num_op_full + 0.5 - t * sigma_x_full
+    CouplingRabi = x_op_full * sigma_z_full
 
-    # Energy functionals
-    E_KS = q.EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
-    E_full = q.EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
+    # Energy functional for full system
+    E_full = q.EnergyFunctional(H0_full + lam * CouplingRabi, [sigma_z_full, x_op_full])
 
     # Define sigma_space for full range and for derivative calculation
     sigma_space = np.linspace(-0.95, 0.95, 201)
     sigma_space_deriv = np.linspace(-0.01, 0.01, 5)
 
     # Compute exact v_Hxc over full sigma_space
-    vxc = compute_v_hxc(sigma_space, lam, x, t, E_KS, E_full, sigma_x, x_op)
+    vxc = compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full,
+                        sigma_x_pf, sigma_x_full, x_op_full)
     vxc = np.real(vxc)
 
     # Compute v_Hxc at sigma values around sigma=0 for derivative calculation
-    vxc_deriv = compute_v_hxc(sigma_space_deriv, lam, x, t, E_KS, E_full, sigma_x, x_op)
+    vxc_deriv = compute_v_hxc(sigma_space_deriv, lam, xi, t, E_KS, E_full,
+                              sigma_x_pf, sigma_x_full, x_op_full)
     vxc_deriv = np.real(vxc_deriv)
 
     # Compute derivative of v_Hxc at sigma = 0 using central difference
@@ -82,7 +94,7 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     print(f"Computed η for tangency at σ=0 and λ={lam}: η = {eta_tangent}")
 
     # Compute approximation using computed eta
-    vx_eta_tangent = compute_approximation(sigma_space, lam, x, eta_tangent)
+    vx_eta_tangent = compute_approximation(sigma_space, lam, xi, eta_tangent)
     vx_eta_tangent = np.real(vx_eta_tangent)
 
     # Plotting using PlotConfig
@@ -103,7 +115,7 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
         sigma_space,
         vx_eta_tangent,
         linestyle=PlotConfig.line_styles[1],
-        color=PlotConfig.colors[1],
+        color=PlotConfig.colors[0],
         linewidth=PlotConfig.linewidth,
         label=rf'Approximation with $\eta_c={eta_tangent:.2f}$'
     )
@@ -117,7 +129,7 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
         legend=True
     )
 
-    ax.grid(True)
+    #ax.grid(True)
     PlotConfig.tight_layout(fig)
 
     # Save the plot before showing it
@@ -126,20 +138,20 @@ def plot_v_hxc_vs_approximations(lam, x, t, oscillator_size):
     plt.show()
 
 def main():
-    x = 0  # xi = 0
+    xi = 0  # xi = 0
     t = 1
 
     # Plot 1: λ = 1
     lam1 = 1
     oscillator_size1 = 30
     print(f"Generating Plot 1 for λ = {lam1}")
-    plot_v_hxc_vs_approximations(lam1, x, t, oscillator_size1)
+    plot_v_hxc_vs_approximations(lam1, xi, t, oscillator_size1)
 
     # Plot 2: λ = 3
     lam2 = 3
     oscillator_size2 = 50
     print(f"Generating Plot 2 for λ = {lam2}")
-    plot_v_hxc_vs_approximations(lam2, x, t, oscillator_size2)
+    plot_v_hxc_vs_approximations(lam2, xi, t, oscillator_size2)
 
     # Now compute η vs λ and plot
     oscillator_size = 50
@@ -150,30 +162,35 @@ def main():
     eta_tangent_values = []
 
     # Setup basis and operators once outside the loop
-    b_oscillator = q.NumberBasis(oscillator_size)
     b_spin = q.SpinBasis()
+    sigma_z_pf = b_spin.sigma_z()
+    sigma_x_pf = b_spin.sigma_x()
+
+    b_oscillator = q.NumberBasis(oscillator_size)
     b = b_oscillator.tensor(b_spin)
-    num_op = b_oscillator.diag().extend(b)
-    x_op = b_oscillator.x_operator().extend(b)
-    p_op = -1j * b_oscillator.dx_operator().extend(b)
-    sigma_z = b_spin.sigma_z().extend(b)
-    sigma_x = b_spin.sigma_x().extend(b)
-    sigma_y = b_spin.sigma_y().extend(b)
+    num_op_full = b_oscillator.diag().extend(b)
+    x_op_full = b_oscillator.x_operator().extend(b)
+    sigma_z_full = sigma_z_pf.extend(b)
+    sigma_x_full = sigma_x_pf.extend(b)
 
     sigma_space_deriv = np.linspace(-0.01, 0.01, 5)
 
     for lam in lam_values:
         print(f"Computing η for λ = {lam:.2f}")
 
-        H0_Rabi_KS = num_op + 0.5 - t * sigma_x
-        CouplingRabi = x_op * sigma_z
+        # Kohn-Sham Hamiltonian (photon-free)
+        H0_pf = -t * sigma_x_pf
+        E_KS = q.EnergyFunctional(H0_pf, sigma_z_pf)
 
-        E_KS = q.EnergyFunctional(H0_Rabi_KS, [sigma_z, x_op])
-        E_full = q.EnergyFunctional(H0_Rabi_KS + lam * CouplingRabi, [sigma_z, x_op])
+        # Full Hamiltonian
+        H0_full = num_op_full + 0.5 - t * sigma_x_full
+        CouplingRabi = x_op_full * sigma_z_full
+        E_full = q.EnergyFunctional(H0_full + lam * CouplingRabi, [sigma_z_full, x_op_full])
 
         # Compute v_Hxc at sigma values around sigma=0
         vxc_deriv = compute_v_hxc(
-            sigma_space_deriv, lam, x, t, E_KS, E_full, sigma_x, x_op)
+            sigma_space_deriv, lam, xi, t, E_KS, E_full,
+            sigma_x_pf, sigma_x_full, x_op_full)
         vxc_deriv = np.real(vxc_deriv)
 
         # Compute derivative
@@ -208,7 +225,7 @@ def main():
         legend=True
     )
 
-    ax.grid(True)
+    #ax.grid(True)
     PlotConfig.tight_layout(fig)
 
     fig.savefig('eta_vs_lambda.pdf', format='pdf')
