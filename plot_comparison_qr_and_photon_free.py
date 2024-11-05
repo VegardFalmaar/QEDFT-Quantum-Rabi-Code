@@ -9,7 +9,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from qmodel import NumberBasis, SpinBasis   # type: ignore
 
+from quantum_rabi import QuantumRabi
 from plot_config import PlotConfig as PC
+
+
+def ev(op, state):
+    """Shorthand function for the exp val of an operator in a given state."""
+    return op.expval(state, transform_real=True)
+
+
+PC.use_tex()
+
 
 om = 1
 t = 1
@@ -37,7 +47,7 @@ d_coupl = []
 d_num = []
 d_E = []
 
-g_span = np.linspace(0,3,50)
+g_span = np.linspace(0, 3, 50)
 v = 0.1
 j = 0.1
 
@@ -45,11 +55,6 @@ j = 0.1
 sigma_x_pf = b_spin.sigma_x()
 sigma_y_pf = b_spin.sigma_y()
 sigma_z_pf = b_spin.sigma_z()
-
-def check_sigma_x(g, sigma, x):
-    # sigma and x must be in a precise relation
-    if abs(g*sigma + j + om**2*x) > 1e-6:
-        print(f'sigma--xi check: FAIL at g={g}, sigma={sigma}, xi={x}, j={j}! maybe increase oscillator_size value')
 
 for g in g_span:
     H_QR = H0_Rabi + g*CouplingRabi + v*sigma_z + j*x_op
@@ -72,25 +77,56 @@ for g in g_span:
     Psi_QR = res_QR['eigenvectors'][0]
     Psi_pf = res_pf['eigenvectors'][0]
     # check
-    check_sigma_x(g, sigma_z.expval(Psi_QR, transform_real=True), x_op.expval(Psi_QR, transform_real=True))
+    QuantumRabi.check_sigma_xi(
+        omega=om,
+        lmbda_times_g=g,
+        sigma=sigma_z.expval(Psi_QR, transform_real=True),
+        xi=x_op.expval(Psi_QR, transform_real=True),
+        j=j,
+        tol=1e-6,
+    )
 
     # compare expvals
     d_E.append(spec_QR[-1][0] - spec_pf[-1][0]) # groundstate energy
-    d_xi.append(x_op.expval(Psi_QR, transform_real=True) - x_pf.expval(Psi_pf, transform_real=True))
-    d_sigma.append(sigma_z.expval(Psi_QR, transform_real=True) - sigma_z_pf.expval(Psi_pf, transform_real=True))
-    d_kin.append(-t*sigma_x.expval(Psi_QR, transform_real=True) + t*sigma_x_pf.expval(Psi_pf, transform_real=True))
-    d_coupl.append(g*(sigma_z*x_op).expval(Psi_QR, transform_real=True) - g*(sigma_z_pf*x_pf).expval(Psi_pf, transform_real=True))
-    d_num.append(num_op.expval(Psi_QR, transform_real=True) - num_pf.expval(Psi_pf, transform_real=True))
+    d_xi.append(ev(x_op, Psi_QR) - ev(x_pf, Psi_pf))
+    d_sigma.append(ev(sigma_z, Psi_QR) - ev(sigma_z_pf, Psi_pf))
+    d_kin.append(-t*ev(sigma_x, Psi_QR) + t*ev(sigma_x_pf, Psi_pf))
+    d_coupl.append(g*ev(sigma_z*x_op, Psi_QR) - g*ev(sigma_z_pf*x_pf, Psi_pf))
+    d_num.append(ev(num_op, Psi_QR) - ev(num_pf, Psi_pf))
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(PC.fig_width, 2*PC.fig_height))
-ax1.plot(g_span, spec_QR, '-k', lw=PC.linewidth)
-ax1.plot(g_span, spec_pf, '--k', lw=PC.linewidth)
+fig, (ax1, ax2) = plt.subplots(
+    nrows=2, ncols=1, figsize=(PC.fig_width, 1.5*PC.fig_height), sharex=True
+)
 
-ax2.plot(g_span, d_E, '-k', label=r'$\hat H$', lw=PC.linewidth)
-ax2.plot(g_span, d_xi, '--k', label=r'$\hat x$', lw=PC.linewidth)
-ax2.plot(g_span, d_sigma, '.k', label=r'$\hat\sigma_z$', lw=PC.linewidth)
-ax2.plot(g_span, d_kin, 'xk', label=r'$-t\hat\sigma_x$', lw=PC.linewidth)
-ax2.plot(g_span, d_coupl, 'ok', label=r'$g\hat\sigma_z\hat x$', lw=PC.linewidth)
-ax2.plot(g_span, d_num, '^k', label=r'$\hat a^\dagger\hat a$', lw=PC.linewidth)
-PC.set_ax_info(ax2, xlabel='$g$', legend=True)
-plt.show()
+lw = PC.linewidth
+ms = PC.markersize
+
+ax1.plot(g_span, spec_QR, ls='-', c='k', lw=lw)
+ax1.plot(g_span, spec_pf, ls='--', c='k', lw=lw)
+ax1.plot([], ls='-', c='k', label='Quantum Rabi', lw=lw)
+ax1.plot([], ls='--', c='k', label='Photon-free', lw=lw)
+
+ax2.plot(g_span, d_E, ls='-', c='k', label=r'$\hat H$', lw=lw)
+ax2.plot(g_span, d_xi, ls='--', c='k', label=r'$\hat x$', lw=lw)
+ax2.plot(g_span, d_sigma, ls='-.', c='k', label=r'$\hat\sigma_z$', lw=lw)
+ax2.plot(g_span, d_kin, ls=':', c='k', label=r'$-t\hat\sigma_x$', lw=lw)
+lbl = r'$g\hat\sigma_z\hat x$'
+ax2.plot(g_span, d_coupl, marker='o', ls='', c='k', label=lbl, ms=ms)
+lbl = r'$\hat a^\dagger\hat a$'
+ax2.plot(g_span, d_num, marker='^', ls='', c='k', label=lbl, ms=ms)
+
+PC.set_ax_info(ax1, legend=True)   # also sets the fontsize of axis ticks
+PC.set_ax_info(ax2, xlabel='$g$', legend=False)
+ax2.legend(loc='lower left', ncols=2, fontsize=PC.fontsize_legends)
+
+# do the normal tight_layout with the usual padding and then shift a little to
+# the left
+fig.tight_layout(pad=0.1, rect=(-0.03, 0, 1, 1))
+
+p = {
+    'omega': om,
+    't': t,
+    'v': v,
+    'j': j,
+}
+fig.savefig(PC.save_fname('spectrum-photon-free', '.pdf', p))

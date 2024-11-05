@@ -41,14 +41,19 @@ class QuantumRabi:
 
     @staticmethod
     def check_sigma_xi(
-        omega: float, lmbda_times_g: float, sigma: float, xi: float, j: float
+        omega: float,
+        lmbda_times_g: float,
+        sigma: float,
+        xi: float,
+        j: float,
+        tol: float = 1e-4,
     ):
         # sigma and xi must be in a precise relation after d/d xi applied on
         # displacement rule
         error = abs(lmbda_times_g*sigma + j + omega**2*xi)
-        if error > 10e-4:
-            msg = f'sigma--xi check:\n\tFAIL at {lmbda_times_g=}, ' \
-                + f'{sigma=}, {xi=}, {j=:.2e}: {error=:.2e}!\n' \
+        if error > tol:
+            msg = f'sigma--xi check:\n\tFAIL at {lmbda_times_g=:.8f}, ' \
+                + f'{sigma=:.8f}, {xi=:.8f}, {j=:.8f}: {error=:.2e}!\n' \
                 + '\tConsider increasing the oscillator_size value.'
             raise ValueError(msg)
 

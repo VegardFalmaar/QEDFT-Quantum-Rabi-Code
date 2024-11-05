@@ -28,6 +28,9 @@ class PlotConfig:
 
     line_styles = ['-', '--', ':']
     linewidth = 0.8
+    markersize = 1.2
+    # If we want to use other colors than black, I think we should find
+    # something nicer than these. They are just temporary.
     colors = ['k', 'b', 'g']
 
     save_dir = 'plots'
@@ -110,7 +113,8 @@ class PlotConfig:
                 Default: 3/2. Use None to turn off size adjustment.
         """
         assert len(fig.axes) == 1, 'PlotConfig.tight_layout can only work ' \
-            f'with figures with 1 axis, you have {len(fig.axes)}.'
+            f'with figures with 1 axis, you have {len(fig.axes)}.' \
+            'Consider using fig.tight_layout(pad=0.1) directly instead.'
         ax = fig.axes[0]
 
         fig.tight_layout(pad=0.1)
@@ -155,10 +159,16 @@ class PlotConfig:
 
     @staticmethod
     def save_fname(prefix: str, suffix: str, parameters: Dict[str, float]) -> Path:
+        forbidden = ['__', '.']
+        for f in forbidden:
+            assert f not in prefix, f"prefix '{prefix}' should not contain '{f}'"
+            for p in parameters.keys():
+                assert f not in p, f"parameter name '{p}' should not contain '{f}'"
+
         result = Path(PlotConfig.save_dir)
         fname = prefix
         for parameter, value in parameters.items():
-            fname += f'__{parameter}_{value:.4f}'
+            fname += f'__{parameter}_{value:.4f}'.replace('.', '_')
         result = result / fname
         return result.with_suffix(suffix)
 
