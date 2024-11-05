@@ -7,9 +7,9 @@ from plot_config import PlotConfig  # Import the PlotConfig class
 PlotConfig.use_tex()
 
 # Define the check_sigma_x function with adjusted error tolerance
-def check_sigma_x(lam, sigma, x, j):
-    if abs(lam * sigma + j + x) > 1e-3:
-        print(f'sigma--xi check: FAIL at lam={lam}, sigma={sigma}, xi={x}, j={j}! '
+def check_sigma_x(lam, sigma, xi, j):
+    if abs(lam * sigma + j + xi) > 1e-3:
+        print(f'sigma--xi check: FAIL at lam={lam}, sigma={sigma}, xi={xi}, j={j}! '
               'Maybe increase oscillator_size value')
 
 def compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
@@ -97,6 +97,14 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
     vx_eta_tangent = compute_approximation(sigma_space, lam, xi, eta_tangent)
     vx_eta_tangent = np.real(vx_eta_tangent)
 
+    # Prepare parameter dictionary for filenames and annotations
+    params = {
+        'lam': lam,
+        'xi': xi,
+        't': t,
+        'osc_size': oscillator_size
+    }
+
     # Plotting using PlotConfig
     fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
 
@@ -115,7 +123,7 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         sigma_space,
         vx_eta_tangent,
         linestyle=PlotConfig.line_styles[1],
-        color=PlotConfig.colors[0],
+        color=PlotConfig.colors[0],  
         linewidth=PlotConfig.linewidth,
         label=rf'Approximation with $\eta_c={eta_tangent:.2f}$'
     )
@@ -129,13 +137,23 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         legend=True
     )
 
-    #ax.grid(True)
-    PlotConfig.tight_layout(fig)
+    # Add parameter text box
+    PlotConfig.parameter_text_box(
+        ax,
+        s=rf'$t = {t}, \; \xi = {xi}, \; \lambda = {lam}$',
+        loc='lower right'
+    )
 
-    # Save the plot before showing it
-    fig.savefig(f'v_hxc_lambda_{lam}.pdf', format='pdf')
-    fig.savefig(f'v_hxc_lambda_{lam}.eps', format='eps')
-    plt.show()
+    # Add grid lines
+    #ax.grid(True)
+    PlotConfig.tight_layout(fig, ax_aspect=3/2)
+
+    # Save the plot using PlotConfig.save_fname
+    fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam}', '.pdf', params), format='pdf')
+    # Uncomment the following line if you want to save as EPS
+    #fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam}', '.eps', params), format='eps')
+    # plt.show()  # Uncomment to display the plot
+
 
 def main():
     xi = 0  # xi = 0
@@ -204,6 +222,13 @@ def main():
     lam_values = np.array(lam_values)
     eta_tangent_values = np.array(eta_tangent_values)
 
+    # Prepare parameter dictionary
+    params = {
+        'xi': xi,
+        't': t,
+        'osc_size': oscillator_size
+    }
+
     # Plot η_tangent versus lam_values using PlotConfig
     fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
 
@@ -211,8 +236,7 @@ def main():
         lam_values,
         eta_tangent_values,
         linestyle='-',
-        marker='o',
-        color=PlotConfig.colors[0],
+        color=PlotConfig.colors[0],  # Use PlotConfig color
         linewidth=PlotConfig.linewidth,
         label=r'$\eta$ vs $\lambda$'
     )
@@ -225,12 +249,22 @@ def main():
         legend=True
     )
 
-    #ax.grid(True)
-    PlotConfig.tight_layout(fig)
+    # Add parameter text box
+    PlotConfig.parameter_text_box(
+        ax,
+        s=rf'$t = {t}, \; \xi = {xi}$',
+        loc='lower right'
+    )
 
-    fig.savefig('eta_vs_lambda.pdf', format='pdf')
-    fig.savefig('eta_vs_lambda.eps', format='eps')
-    plt.show()
+    # Add grid lines
+    #ax.grid(True)
+    PlotConfig.tight_layout(fig, ax_aspect=3/2)
+
+    # Save the plot using PlotConfig.save_fname
+    fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.pdf', params), format='pdf')
+    # Uncomment the following line if you want to save as EPS
+    #fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.eps', params), format='eps')
+    # plt.show()  # Uncomment to display the plot
 
 if __name__ == "__main__":
     main()
