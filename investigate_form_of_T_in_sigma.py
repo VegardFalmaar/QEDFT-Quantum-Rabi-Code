@@ -549,3 +549,4 @@ def interactive_plot_in_sigma():
 
 if __name__ == '__main__':
     interactive_plot_in_sigma()
+    # interactive_plot_of_ellipse_params()
