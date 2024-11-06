@@ -9,8 +9,8 @@ PlotConfig.use_tex()
 # Define the check_sigma_x function with adjusted error tolerance
 def check_sigma_x(lam, sigma, xi, j):
     if abs(lam * sigma + j + xi) > 1e-3:
-        print(f'sigma--xi check: FAIL at lam={lam}, sigma={sigma}, xi={xi}, j={j}! '
-              'Maybe increase oscillator_size value')
+        print(f'sigma--xi check: FAIL at λ={lam}, σ={sigma}, ξ={xi}, j={j}! '
+              'Consider increasing oscillator_size')
 
 def compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
     vxc = []
@@ -105,6 +105,9 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         'osc_size': oscillator_size
     }
 
+    # Convert lam to string without periods for filenames
+    lam_str = str(lam).replace('.', '_')
+
     # Plotting using PlotConfig
     fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
 
@@ -123,7 +126,7 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
         sigma_space,
         vx_eta_tangent,
         linestyle=PlotConfig.line_styles[1],
-        color=PlotConfig.colors[0],  
+        color=PlotConfig.colors[0],  # Use a different color
         linewidth=PlotConfig.linewidth,
         label=rf'Approximation with $\eta_c={eta_tangent:.2f}$'
     )
@@ -149,9 +152,9 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size):
     PlotConfig.tight_layout(fig, ax_aspect=3/2)
 
     # Save the plot using PlotConfig.save_fname
-    fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam}', '.pdf', params), format='pdf')
+    fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam_str}', '.pdf', params), format='pdf')
     # Uncomment the following line if you want to save as EPS
-    #fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam}', '.eps', params), format='eps')
+    # fig.savefig(PlotConfig.save_fname(f'v_hxc_lambda_{lam_str}', '.eps', params), format='eps')
     # plt.show()  # Uncomment to display the plot
 
 
@@ -165,8 +168,8 @@ def main():
     print(f"Generating Plot 1 for λ = {lam1}")
     plot_v_hxc_vs_approximations(lam1, xi, t, oscillator_size1)
 
-    # Plot 2: λ = 3
-    lam2 = 3
+    # Plot 2: λ = 2.5 (changed from 3 to 2.5 to avoid numerical difficulties)
+    lam2 = 2.5
     oscillator_size2 = 50
     print(f"Generating Plot 2 for λ = {lam2}")
     plot_v_hxc_vs_approximations(lam2, xi, t, oscillator_size2)
@@ -176,7 +179,6 @@ def main():
 
     # Define a range of lambda values
     lam_values = np.linspace(0.1, 3.0, 50)
-
     eta_tangent_values = []
 
     # Setup basis and operators once outside the loop
@@ -241,12 +243,19 @@ def main():
         label=r'$\eta$ vs $\lambda$'
     )
 
+    # Add horizontal dotted line at η = 1
+    ax.axhline(y=1, color='gray', linestyle='--', linewidth=1)
+    #ax.text(lam_values[-1], 1.02, r'$\eta=1$', ha='right', va='bottom', color='gray')
+
+    # Set y-axis limits to include η = 1
+    ax.set_ylim(bottom=eta_tangent_values.min()-0.1, top=1.05)
+
     PlotConfig.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
         ylabel=r'$\eta$ (tangent at $\sigma=0$)',
         title=r'Relationship between $\lambda$ and $\eta$',
-        legend=True
+        legend=False  # Legend is not necessary here
     )
 
     # Add parameter text box
@@ -263,7 +272,7 @@ def main():
     # Save the plot using PlotConfig.save_fname
     fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.pdf', params), format='pdf')
     # Uncomment the following line if you want to save as EPS
-    #fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.eps', params), format='eps')
+    # fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.eps', params), format='eps')
     # plt.show()  # Uncomment to display the plot
 
 if __name__ == "__main__":
