@@ -238,41 +238,42 @@ def main():
         lam_values,
         eta_tangent_values,
         linestyle='-',
-        color=PlotConfig.colors[0],  # Use PlotConfig color
+        color=PlotConfig.colors[0],
         linewidth=PlotConfig.linewidth,
         label=r'$\eta$ vs $\lambda$'
     )
 
     # Add horizontal dotted line at η = 1
     ax.axhline(y=1, color='gray', linestyle='--', linewidth=1)
-    #ax.text(lam_values[-1], 1.02, r'$\eta=1$', ha='right', va='bottom', color='gray')
 
     # Set y-axis limits to include η = 1
-    ax.set_ylim(bottom=eta_tangent_values.min()-0.1, top=1.05)
+    ax.set_ylim(bottom=eta_tangent_values.min() - 0.1, top=1.05)
 
+    # Set axis information and enable legend
     PlotConfig.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
         ylabel=r'$\eta$ (tangent at $\sigma=0$)',
         title=r'Relationship between $\lambda$ and $\eta$',
-        legend=False  # Legend is not necessary here
+        legend=True
     )
 
-    # Add parameter text box
+    # Add parameter text box (adjust location if needed)
     PlotConfig.parameter_text_box(
         ax,
         s=rf'$t = {t}, \; \xi = {xi}$',
         loc='lower right'
     )
 
-    # Add grid lines
-    #ax.grid(True)
+    # Add grid lines (optional)
+    # ax.grid(True)
     PlotConfig.tight_layout(fig, ax_aspect=3/2)
 
-    # Save the plot using PlotConfig.save_fname
+    # Adjust legend location to top right
+    ax.legend(loc='upper left', bbox_to_anchor=(0, 0.9))
+
+    # Save the plot
     fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.pdf', params), format='pdf')
-    # Uncomment the following line if you want to save as EPS
-    # fig.savefig(PlotConfig.save_fname('eta_vs_lambda', '.eps', params), format='eps')
     # plt.show()  # Uncomment to display the plot
 
 if __name__ == "__main__":
