@@ -127,4 +127,4 @@ class QuantumRabi:
 
     def G(self, sigma: float) -> float:
         T = self.F(sigma, 0) - self.analytic_terms_of_the_coupling(sigma, 0)
-        return - 0.5 * self.lmbda * self.g**2 * (1 - sigma**2) / self.omega**2 - T / self.lmbda
+        return - 0.5 * self.lmbda * self.g**2 * (1 - sigma**2) / self.omega**2 + T / self.lmbda
