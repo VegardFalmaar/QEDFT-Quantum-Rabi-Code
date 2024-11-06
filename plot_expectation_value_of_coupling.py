@@ -15,15 +15,12 @@ def plot_expectation_value():
 
     nu_values = np.linspace(0, 1.0, 41)
     fig, ax = plt.subplots(figsize=(PC.fig_width, PC.fig_height))
+
+    qr = QuantumRabi(omega, t, g)
     for sigma, ls in zip([0.0, 0.4, 0.6], PC.line_styles):
         expectation_values = np.zeros_like(nu_values)
         for i, nu in enumerate(nu_values):
-            qr = QuantumRabi(omega, t, g, lmbda=nu)
-            v, j = qr.minimizer_potential(sigma, 0)
-            op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
-            gs = op_H.eig(hermitian=True)['eigenvectors'][0]
-            ev = (qr.op_sigma_z*qr.op_x).expval(gs, transform_real=True)
-            expectation_values[i] = g * ev
+            expectation_values[i] = qr.G_integrand(nu=nu, sigma=sigma)
 
         ax.plot(
             nu_values,
@@ -70,7 +67,8 @@ def plot_G():
             if i == 0:
                 continue
             qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=40)
-            G_values[i] = qr.G(sigma)
+            # G_values[i] = qr.G_from_T(sigma)
+            G_values[i] = qr.G_from_integration(sigma)
 
         ax.plot(
             lmbda_values,

@@ -80,6 +80,20 @@ class QuantumRabi:
         ])
         return rho0_up, rho0_down
 
+    def minimizer_potential(self, sigma: float, xi: float):
+        energy = q.EnergyFunctional(self.op_H_0, [self.op_sigma_z, self.op_x])
+        lt = energy.legendre_transform([sigma, xi], verbose=False)
+        v, j = lt['pot']
+        self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
+        return v, j
+
+    def F_from_minimization(self, sigma: float, xi: float) -> float:
+        energy = q.EnergyFunctional(self.op_H_0, [self.op_sigma_z, self.op_x])
+        lt = energy.legendre_transform([sigma, xi], verbose=False)
+        _, j = lt['pot']
+        self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
+        return lt['F']
+
     def T_integrand(self, tau: float, sigma: float) -> float:
         qr_tau = QuantumRabi(
             self.omega,
@@ -95,7 +109,7 @@ class QuantumRabi:
             ground_state, transform_real=True
         )
 
-    def T(self, sigma: float) -> float:
+    def T_from_integration(self, sigma: float) -> float:
         integration, error = scipy.integrate.quad(
             self.T_integrand, 0, self.lmbda,
             args=(sigma),
@@ -104,27 +118,41 @@ class QuantumRabi:
         # print(f'Integration error estimate: {error:.3e}')
         return - 4 * self.t * self.g * integration / self.omega**2
 
-    def F(self, sigma: float, xi: float) -> float:
-        energy = q.EnergyFunctional(self.op_H_0, [self.op_sigma_z, self.op_x])
-        lt = energy.legendre_transform([sigma, xi], verbose=False)
-        _, j = lt['pot']
-        self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
-        return lt['F']
-
-    def minimizer_potential(self, sigma: float, xi: float):
-        energy = q.EnergyFunctional(self.op_H_0, [self.op_sigma_z, self.op_x])
-        lt = energy.legendre_transform([sigma, xi], verbose=False)
-        v, j = lt['pot']
-        self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
-        return v, j
-
-    def analytic_terms_of_the_coupling(self, sigma: float, xi: float):
+    def analytic_terms_of_F(self, sigma: float, xi: float):
         return 0.5 * self.omega \
             - self.t * np.sqrt(1 - sigma**2) \
             + 0.5 * self.omega**2 * xi**2 \
             + self.lmbda * self.g * sigma * xi \
             - 0.5 * self.lmbda**2 * self.g**2 * (1 - sigma**2) / self.omega**2
 
-    def G(self, sigma: float) -> float:
-        T = self.F(sigma, 0) - self.analytic_terms_of_the_coupling(sigma, 0)
-        return - 0.5 * self.lmbda * self.g**2 * (1 - sigma**2) / self.omega**2 + T / self.lmbda
+    def T_from_minimization(self, sigma: float) -> float:
+        return self.F_from_minimization(sigma, 0.0) \
+            - self.analytic_terms_of_F(sigma, 0.0)
+
+    def G_from_T(self, sigma: float) -> float:
+        o, l, g = self.omega, self.lmbda, self.g
+        T = self.T_from_minimization(sigma)
+        return - 0.5 * l * g**2 * (1 - sigma**2) / o**2 + T / l
+
+    def G_integrand(self, nu: float, sigma: float) -> float:
+        qr_nu = QuantumRabi(
+            self.omega,
+            self.t,
+            self.g,
+            lmbda=nu,
+            oscillator_size=self.oscillator_size
+        )
+        v, j = qr_nu.minimizer_potential(sigma, 0.0)
+        op_H = qr_nu.op_H_0 + v*qr_nu.op_sigma_z + j*qr_nu.op_x
+        gs = op_H.eig(hermitian=True)['eigenvectors'][0]
+        ev = (qr_nu.op_sigma_z*qr_nu.op_x).expval(gs, transform_real=True)
+        return self.g * ev
+
+    def G_from_integration(self, sigma: float) -> float:
+        integration, error = scipy.integrate.quad(
+            self.G_integrand, 0, self.lmbda,
+            args=(sigma),
+            # epsabs=1e-12, epsrel=1e-12, limit=80
+        )
+        # print(f'Integration error estimate: {error:.3e}')
+        return integration / self.lmbda

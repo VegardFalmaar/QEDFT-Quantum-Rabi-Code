@@ -35,8 +35,8 @@ j_values = np.linspace(-0.5, 0.5, 4)
 @pytest.mark.parametrize('xi', xi_values)
 def test_thm_4_2_item_1(omega, t, g, sigma, xi):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
-    LHS = qr.F(sigma, xi)
-    RHS = qr.F(-sigma, -xi)
+    LHS = qr.F_from_minimization(sigma, xi)
+    RHS = qr.F_from_minimization(-sigma, -xi)
     assert abs(LHS - RHS) < TOL
 
 
@@ -48,8 +48,8 @@ def test_thm_4_2_item_1(omega, t, g, sigma, xi):
 @pytest.mark.parametrize('zeta', zeta_values)
 def test_thm_4_2_item_2(omega, t, g, sigma, xi, zeta):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
-    LHS = qr.F(sigma, xi + zeta)
-    RHS = qr.F(sigma, xi) \
+    LHS = qr.F_from_minimization(sigma, xi + zeta)
+    RHS = qr.F_from_minimization(sigma, xi) \
         + omega**2 * zeta * (xi + 0.5*zeta) \
         + g * sigma * zeta
     assert abs(LHS - RHS) < TOL
@@ -111,9 +111,9 @@ def test_thm_4_2_item_6(omega, t, g, sigma, xi):
 @pytest.mark.parametrize('lmbda', lmbda_values)
 def test_thm_5_2(omega, t, g, sigma, xi, lmbda):
     qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=OSCILLATOR_SIZE)
-    T = qr.T(sigma)
-    LHS = qr.F(sigma, xi)
-    RHS = qr.analytic_terms_of_the_coupling(sigma, xi) + T
+    T = qr.T_from_integration(sigma)
+    LHS = qr.F_from_minimization(sigma, xi)
+    RHS = qr.analytic_terms_of_F(sigma, xi) + T
     assert abs(LHS - RHS) < TOL
 
 

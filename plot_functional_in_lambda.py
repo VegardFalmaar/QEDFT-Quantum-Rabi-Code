@@ -27,7 +27,7 @@ def main():
         F_values = np.zeros_like(lmbda_values)
         for i, lmbda in enumerate(lmbda_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            F_values[i] = qr.F(sigma, xi)
+            F_values[i] = qr.F_from_minimization(sigma, xi)
 
         ax1.plot(
             lmbda_values,
@@ -58,8 +58,8 @@ def main():
     analytic_terms = np.zeros_like(lmbda_values)
     for i, lmbda in enumerate(lmbda_values):
         qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-        F_values[i] = qr.F(sigma, xi)
-        analytic_terms[i] = qr.analytic_terms_of_the_coupling(sigma, xi)
+        F_values[i] = qr.F_from_minimization(sigma, xi)
+        analytic_terms[i] = qr.analytic_terms_of_F(sigma, xi)
 
     ax2.plot(
         lmbda_values,
