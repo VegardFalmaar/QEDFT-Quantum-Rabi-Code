@@ -54,7 +54,7 @@ def main():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('integrand-of-T-scaling', '.pdf', p))
+    fig.savefig(PC.save_fname('integrand-of-kinetic-correlation-functional', '.pdf', p))
     # plt.show()
 
 
