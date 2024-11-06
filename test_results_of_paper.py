@@ -33,7 +33,7 @@ j_values = np.linspace(-0.5, 0.5, 4)
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('xi', xi_values)
-def test_thm_4_9_item_1(omega, t, g, sigma, xi):
+def test_thm_4_2_item_1(omega, t, g, sigma, xi):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
     LHS = qr.F(sigma, xi)
     RHS = qr.F(-sigma, -xi)
@@ -46,7 +46,7 @@ def test_thm_4_9_item_1(omega, t, g, sigma, xi):
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('xi', xi_values)
 @pytest.mark.parametrize('zeta', zeta_values)
-def test_thm_4_9_item_2(omega, t, g, sigma, xi, zeta):
+def test_thm_4_2_item_2(omega, t, g, sigma, xi, zeta):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
     LHS = qr.F(sigma, xi + zeta)
     RHS = qr.F(sigma, xi) \
@@ -59,7 +59,7 @@ def test_thm_4_9_item_2(omega, t, g, sigma, xi, zeta):
 @pytest.mark.parametrize('t', t_values)
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
-def test_thm_4_9_item_4(omega, t, g, sigma):
+def test_thm_4_2_item_4(omega, t, g, sigma):
     xi = 0
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
     v, j = qr.minimizer_potential(sigma=sigma, xi=xi)
@@ -75,7 +75,7 @@ def test_thm_4_9_item_4(omega, t, g, sigma):
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('xi', xi_values)
-def test_thm_4_9_item_5(omega, t, g, sigma, xi):
+def test_thm_4_2_item_5(omega, t, g, sigma, xi):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
     v, j = qr.minimizer_potential(sigma=sigma, xi=xi)
     op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
@@ -92,7 +92,7 @@ def test_thm_4_9_item_5(omega, t, g, sigma, xi):
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('xi', xi_values)
-def test_thm_4_9_item_6(omega, t, g, sigma, xi):
+def test_thm_4_2_item_6(omega, t, g, sigma, xi):
     qr = QuantumRabi(omega, t, g, oscillator_size=OSCILLATOR_SIZE)
     v, j = qr.minimizer_potential(sigma=sigma, xi=xi)
     op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
@@ -109,7 +109,7 @@ def test_thm_4_9_item_6(omega, t, g, sigma, xi):
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('xi', xi_values)
 @pytest.mark.parametrize('lmbda', lmbda_values)
-def test_thm_5_1(omega, t, g, sigma, xi, lmbda):
+def test_thm_5_2(omega, t, g, sigma, xi, lmbda):
     qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=OSCILLATOR_SIZE)
     T = qr.T(sigma)
     LHS = qr.F(sigma, xi)
@@ -122,7 +122,7 @@ def test_thm_5_1(omega, t, g, sigma, xi, lmbda):
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
 @pytest.mark.parametrize('lmbda', lmbda_values)
-def test_cor_5_3(omega, t, g, sigma, lmbda):
+def test_cor_5_4(omega, t, g, sigma, lmbda):
     # TODO: finish this test
     LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G(sigma)
     def integrand(nu):
@@ -135,7 +135,7 @@ def test_cor_5_3(omega, t, g, sigma, lmbda):
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('v', v_values)
 @pytest.mark.parametrize('j', j_values)
-def test_eq_40(omega, t, g, v, j):
+def test_eq_20(omega, t, g, v, j):
     qr = QuantumRabi(omega, t, g, lmbda=1.0, oscillator_size=OSCILLATOR_SIZE)
     op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
     eigenvectors = op_H.eig(hermitian=True)['eigenvectors']
@@ -147,6 +147,3 @@ def test_eq_40(omega, t, g, v, j):
         RHS = 0.0
         assert LHS.imag < TOL
         assert LHS.real - RHS < TOL
-
-if __name__ == '__main__':
-    test_eq_40(1, 1, 1, 0.3, 0.1)
