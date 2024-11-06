@@ -34,14 +34,13 @@ def main():
     PC.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
-        ylabel=r'$F_\mathrm{LL}^\lambda (\sigma, \xi) \, / \, \omega$',
-        title=r'The Adiabatic Connection of $F_\mathrm{LL}$',
+        ylabel=r'$F_\mathrm{LL}^\lambda (\sigma, \xi)$',
         legend=True,
     )
 
     PC.parameter_text_box(
         ax,
-        s=r'$ t = \omega, \; g = 3 \omega^{3/2}, \; \xi = 0 $',
+        s=r'$ \omega = 1, \; t = 1, \; g = 3, \; \xi = 0 $',
         loc='upper right',
     )
 
@@ -53,7 +52,7 @@ def main():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('adiabatic-connection', '.pdf', p))
+    fig.savefig(PC.save_fname('functional-in-lambda', '.pdf', p))
     # plt.show()
 
 

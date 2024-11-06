@@ -46,7 +46,7 @@ class QuantumRabi:
         sigma: float,
         xi: float,
         j: float,
-        tol: float = 1e-4,
+        tol: float = 1e-3,
     ):
         # sigma and xi must be in a precise relation after d/d xi applied on
         # displacement rule
