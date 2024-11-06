@@ -25,7 +25,7 @@ def plot_in_lambda():
         ax.plot(
             lmbda_values,
             T_values / omega,
-            label=r'$\sigma = ' f'{sigma:.2f}$',
+            label=r'$\sigma = ' f'{sigma:.1f}$',
             ls=ls,
             lw=PC.linewidth,
             color='k',
@@ -33,18 +33,20 @@ def plot_in_lambda():
     PC.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
-        ylabel=r'$T_c^\lambda (\sigma) \, / \, \omega$',
-        title='The Kinetic Correlation Functional',
+        ylabel=r'$T_c^\lambda (\sigma)$',
         legend=True,
     )
 
     PC.parameter_text_box(
         ax,
-        s=r'$ t = \omega, \; g = 3 \omega^{3/2} $',
+        s=r'$ \omega = 1, \; t = 1, \; g = 3 $',
         loc='lower right',
     )
 
-    PC.tight_layout(fig, ax_aspect=3/2)
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+
+    PC.tight_layout(fig, ax_aspect=1.75)
 
     p = {
         'omega': omega,
@@ -52,7 +54,7 @@ def plot_in_lambda():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('T-scaling-with-lambda', '.pdf', p))
+    fig.savefig(PC.save_fname('kinetic-correlation-functional-in-lambda', '.pdf', p))
 
 
 def plot_in_sigma():
@@ -85,7 +87,7 @@ def plot_in_sigma():
         ax.plot(
             sigma_values,
             T_values / omega,
-            label=r'$\lambda = ' f'{lmbda:.2f}$',
+            label=r'$\lambda = ' f'{lmbda:.1f}$',
             ls=ls,
             lw=PC.linewidth,
             color='k',
@@ -93,18 +95,20 @@ def plot_in_sigma():
     PC.set_ax_info(
         ax,
         xlabel=r'$\sigma$',
-        ylabel=r'$T_c^\lambda (\sigma) \, / \, \omega$',
-        title='The Kinetic Correlation Functional',
+        ylabel=r'$T_c^\lambda (\sigma)$',
         legend=True,
     )
 
     PC.parameter_text_box(
         ax,
-        s=r'$ t = \omega, \; g = 3 \omega^{3/2} $',
+        s=r'$ \omega = 1, \; t = 1, \; g = 3 $',
         loc='upper right',
     )
 
-    PC.tight_layout(fig, ax_aspect=3/2)
+    ax.set_ylim(-0.1, 1.1)
+    ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+
+    PC.tight_layout(fig, ax_aspect=1.75)
 
     p = {
         'omega': omega,
@@ -112,9 +116,9 @@ def plot_in_sigma():
         'g': g,
         'xi': xi,
     }
-    fig.savefig(PC.save_fname('T-scaling-with-sigma', '.pdf', p))
+    fig.savefig(PC.save_fname('kinetic-correlation-functional-in-sigma', '.pdf', p))
 
 
 if __name__ == '__main__':
     plot_in_lambda()
-    # plot_in_sigma()
+    plot_in_sigma()
