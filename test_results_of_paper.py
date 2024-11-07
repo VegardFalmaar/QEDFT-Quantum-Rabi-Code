@@ -121,13 +121,28 @@ def test_thm_5_2(omega, t, g, sigma, xi, lmbda):
 @pytest.mark.parametrize('t', t_values)
 @pytest.mark.parametrize('g', g_values)
 @pytest.mark.parametrize('sigma', sigma_values)
-@pytest.mark.parametrize('lmbda', lmbda_values)
+@pytest.mark.parametrize('lmbda', [l for l in lmbda_values if l > 0.1])
 def test_cor_5_4(omega, t, g, sigma, lmbda):
-    # TODO: finish this test
-    LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G(sigma)
+    LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G_from_T(sigma)
     def integrand(nu):
-        pass
+        qr = QuantumRabi(omega, t, g, lmbda=nu)
+        v, j = qr.minimizer_potential(sigma=sigma, xi=0.0)
+        op_H = qr.op_H_0 + v*qr.op_sigma_z + j*qr.op_x
+        gs = op_H.eig(hermitian=True)['eigenvectors'][0]
+        return (qr.op_p**2 - omega**2 * qr.op_x**2).expval(gs) / nu
     RHS = scipy.integrate.quad(integrand, 0, lmbda)[0] / lmbda
+    assert abs(LHS - RHS) < TOL
+
+
+@pytest.mark.parametrize('omega', omega_values)
+@pytest.mark.parametrize('t', t_values)
+@pytest.mark.parametrize('g', g_values)
+@pytest.mark.parametrize('sigma', sigma_values)
+@pytest.mark.parametrize('lmbda', [l for l in lmbda_values if l > 0.1])
+def test_G_from_integration_and_T(omega, t, g, sigma, lmbda):
+    LHS = QuantumRabi(omega, t, g, lmbda=lmbda).G_from_integration(sigma)
+    RHS = QuantumRabi(omega, t, g, lmbda=lmbda).G_from_T(sigma)
+    assert abs(LHS - RHS) < TOL
 
 
 @pytest.mark.parametrize('omega', omega_values)

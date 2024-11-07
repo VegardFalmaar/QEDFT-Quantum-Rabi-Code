@@ -67,8 +67,7 @@ def plot_G():
             if i == 0:
                 continue
             qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=40)
-            # G_values[i] = qr.G_from_T(sigma)
-            G_values[i] = qr.G_from_integration(sigma)
+            G_values[i] = qr.G_from_T(sigma)
 
         ax.plot(
             lmbda_values,
