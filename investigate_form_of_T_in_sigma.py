@@ -10,9 +10,6 @@ from plot_config import PlotConfig as PC
 from utils import ProgressBar
 
 
-# PC.use_tex()
-
-
 def sigma_values_from_logspace():
     # The y-values change rapidly at the end points, so to make the plot nice
     # we should have denser plotting points there. The following section
@@ -139,16 +136,21 @@ def tabulate_ellipse_parameters():
     plt.show()
 
 
-def plot_ellipse_parameters_from_compute():
-    omega = 1.0
+def plot_ellipse_parameters_from_compute_in_lmbda():
     sigma_values = sigma_values_from_logspace()
 
-    fig, ax = plt.subplots()
+    fig, (ax1, ax2) = plt.subplots(
+        nrows=2,
+        ncols=1,
+        figsize=(PC.fig_width, 1.5*PC.fig_height),
+        sharex=True
+    )
     def fit():
         y = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
-            qr = QuantumRabi(omega, t, g, lmbda=1)
-            T = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0)
+            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda)
+            F = qr.F_from_minimization(sigma, 0)
+            T = F - qr.analytic_terms_of_F(sigma, 0)
             y[i] = T
 
         ellipsis_params, pcov = curve_fit(
@@ -160,47 +162,133 @@ def plot_ellipse_parameters_from_compute():
         perr = np.sqrt(np.diag(pcov))
         return ellipsis_params, perr
 
-    # t = 1.0 * omega
-    g = 1.0 * omega**(3/2)
-
-    x_values = np.linspace(0.05, 0.15, 3)
-
-    a_values = np.zeros_like(x_values)
-    b_values = np.zeros_like(x_values)
-    a_std_values = np.zeros_like(x_values)
-    b_std_values = np.zeros_like(x_values)
-    # for i, g in enumerate(x_values):
-    for i, t in enumerate(x_values):
-        (a, b), (a_std, b_std) = fit()
-        # (a, b, d), (a_std, b_std, d_std) = fit()
-        a_values[i] = a
-        b_values[i] = b
-        a_std_values[i] = a_std
-        b_std_values[i] = b_std
-
-    # ax.plot(x_values, a_values, label='a', color='b')
-    # ax.fill_between(x_values, a_values - a_std, a_values + a_std, color='b', alpha=0.5)
-    # ax.plot(x_values, b_values, label='b', color='g')
-    # ax.fill_between(x_values, b_values - b_std, b_values + b_std, color='g', alpha=0.5)
-    # ax.plot(x_values, d_values, label='d', color='r')
-    # ax.fill_between(x_values, d_values - d_std, d_values + d_std, color='r', alpha=0.5)
-
-    t_values = x_values
-    ax.plot(x_values, a_values, label=r'$a$', color='b')
-    ax.plot(x_values, b_values / t_values, label=r'$b / t$', color='g')
-
-    # ax.plot(x_values, a_values, label=r'$a$')
-    # ax.plot(x_values, b_values, label=r'$b$')
-
-    ax.set_title(
-        r'$T_c^\lambda = \frac{b}{a} \left( \sqrt{a^2 - \sigma^2} ' \
-        r'- \sqrt{a^2 - 1} \right)$'
+    lmbda_values = np.linspace(0.05, 3, 60)
+    for t, ls in zip([0.7, 1.0, 2.0], ['-', '--', '-.']):
+        a_values = np.zeros_like(lmbda_values)
+        b_values = np.zeros_like(lmbda_values)
+        a_std_values = np.zeros_like(lmbda_values)
+        b_std_values = np.zeros_like(lmbda_values)
+        for i, lmbda in enumerate(lmbda_values):
+            (a, b), (a_std, b_std) = fit()
+            a_values[i] = a
+            b_values[i] = b
+            a_std_values[i] = a_std
+            b_std_values[i] = b_std
+        print(f'For {t = }, max std dev was')
+        print(f'\tfor a: {np.max(a_std_values):.2e}')
+        print(f'\tfor b: {np.max(b_std_values):.2e}')
+        folder = 'parameters_to_circle_fit/plot_in_lmbda/'
+        np.save(folder + 'lmbda.npy', lmbda_values)
+        np.save(folder + f'{t:.1f}_a.npy', a_values)
+        np.save(folder + f'{t:.1f}_b.npy', b_values)
+        np.save(folder + f'{t:.1f}_a_std.npy', a_std_values)
+        np.save(folder + f'{t:.1f}_b_std.npy', b_std_values)
+        ax1.plot(
+            np.load(folder + 'lmbda.npy'),
+            np.load(folder + f'{t:.1f}_a.npy'),
+            label=rf'$t = {t:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+        ax2.plot(
+            np.load(folder + 'lmbda.npy'),
+            np.load(folder + f'{t:.1f}_b.npy'),
+            label=rf'$t = {t:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+        ax2.plot(
+            [0, np.load(folder + 'lmbda.npy')[-1]],
+            [t, t],
+            ls=ls,
+            lw=PC.linewidth*0.5,
+            color='k',
+            alpha=0.3
+        )
+    ax1.plot(
+        [0, np.load(folder + 'lmbda.npy')[-1]],
+        [1, 1],
+        ls=':',
+        lw=PC.linewidth*0.5,
+        color='k',
+        alpha=0.3
     )
-    # ax.set_xlabel(r'$\lambda g / \omega^{3/2}$')
-    ax.set_xlabel(r'$t / \omega$')
+    PC.set_ax_info(ax1, ylabel=r'$a$', legend=True)
+    PC.set_ax_info(ax2, xlabel=r'$\lambda$', ylabel=r'$b$', legend=True)
+    fig.tight_layout(pad=0.1)
+    fig.savefig(PC.save_dir + '/ellipse-params-in-lambda.pdf')
 
-    ax.legend()
-    plt.show()
+
+def plot_ellipse_parameters_from_compute_in_t():
+    sigma_values = sigma_values_from_logspace()
+
+    fig, (ax1, ax2) = plt.subplots(
+        nrows=2,
+        ncols=1,
+        figsize=(PC.fig_width, 1.5*PC.fig_height),
+        sharex=True
+    )
+    def fit():
+        y = np.zeros_like(sigma_values)
+        for i, sigma in enumerate(sigma_values):
+            os = 40 # if lmbda < 2.5 else 200
+            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda, oscillator_size=os)
+            F = qr.F_from_minimization(sigma, 0)
+            T = F - qr.analytic_terms_of_F(sigma, 0)
+            y[i] = T
+
+        ellipsis_params, pcov = curve_fit(
+            ellipse_fit,
+            sigma_values,
+            y,
+            bounds=([1, -np.inf], [np.inf, np.inf]),
+        )
+        perr = np.sqrt(np.diag(pcov))
+        return ellipsis_params, perr
+
+    t_values = np.linspace(0.05, 3, 60)
+    for lmbda, ls in zip([1.0, 2.0, 2.5], ['-', '--', '-.']):
+        a_values = np.zeros_like(t_values)
+        b_values = np.zeros_like(t_values)
+        a_std_values = np.zeros_like(t_values)
+        b_std_values = np.zeros_like(t_values)
+        for i, t in enumerate(t_values):
+            (a, b), (a_std, b_std) = fit()
+            a_values[i] = a
+            b_values[i] = b
+            a_std_values[i] = a_std
+            b_std_values[i] = b_std
+        print(f'For {lmbda = }, max std dev was')
+        print(f'\tfor a: {np.max(a_std_values):.2e}')
+        print(f'\tfor b: {np.max(b_std_values):.2e}')
+        folder = 'parameters_to_circle_fit/plot_in_t/'
+        np.save(folder + 't.npy', t_values)
+        np.save(folder + f'{lmbda:.1f}_a.npy', a_values)
+        np.save(folder + f'{lmbda:.1f}_b.npy', b_values)
+        np.save(folder + f'{lmbda:.1f}_a_std.npy', a_std_values)
+        np.save(folder + f'{lmbda:.1f}_b_std.npy', b_std_values)
+        ax1.plot(
+            np.load(folder + 't.npy'),
+            np.load(folder + f'{lmbda:.1f}_a.npy'),
+            label=rf'$\lambda = {lmbda:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+        ax2.plot(
+            np.load(folder + 't.npy'),
+            np.load(folder + f'{lmbda:.1f}_b.npy'),
+            label=rf'$\lambda = {lmbda:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+    PC.set_ax_info(ax1, ylabel=r'$a$', legend=True)
+    PC.set_ax_info(ax2, xlabel=r'$t$', ylabel=r'$b$', legend=True)
+    fig.tight_layout(pad=0.1)
+    fig.savefig(PC.save_dir + '/ellipse-params-in-t.pdf')
 
 
 def precompute_data():
@@ -548,5 +636,8 @@ def interactive_plot_in_sigma():
 
 
 if __name__ == '__main__':
+    # PC.use_tex()
     interactive_plot_in_sigma()
     # interactive_plot_of_ellipse_params()
+    # plot_ellipse_parameters_from_compute_in_lmbda()
+    # plot_ellipse_parameters_from_compute_in_t()
