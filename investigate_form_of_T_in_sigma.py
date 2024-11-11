@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -136,19 +137,23 @@ def tabulate_ellipse_parameters():
     plt.show()
 
 
-def plot_ellipse_parameters_from_compute_in_lmbda():
-    sigma_values = sigma_values_from_logspace()
+def compute_ellipse_params_for_plot():
+    top_dir = Path('parameters_to_circle_fit/plot_run_2')
 
-    fig, (ax1, ax2) = plt.subplots(
-        nrows=2,
-        ncols=1,
-        figsize=(PC.fig_width, 1.5*PC.fig_height),
-        sharex=True
-    )
+    sigma_values = sigma_values_from_logspace()
+    lmbda_values = np.linspace(0.05, 3, 60)
+    t_values = np.linspace(0.05, 3, 60)
+
     def fit():
         y = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
-            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda)
+            if lmbda < 1.0:
+                os = 40
+            elif lmbda < 2.0:
+                os = 100
+            else:
+                os = 200
+            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda, oscillator_size=os)
             F = qr.F_from_minimization(sigma, 0)
             T = F - qr.analytic_terms_of_F(sigma, 0)
             y[i] = T
@@ -162,27 +167,82 @@ def plot_ellipse_parameters_from_compute_in_lmbda():
         perr = np.sqrt(np.diag(pcov))
         return ellipsis_params, perr
 
-    lmbda_values = np.linspace(0.05, 3, 60)
+    notes = '''
+    Running with omega = 1 and g = 1. When running for plot in lambda, three
+    values of t are used. The values of t are the prefix to all the different
+    saved files. Vice versa when running for plot in t. The strategy for
+    oscillator size is 40 up to lambda = 1, 100 up to lambda = 2, and 200
+    above. Tolerance for the minimization in qmodel/dft.py is 1e-6.\n\n
+    '''
+    info_file = top_dir / 'info.txt'
+    # buffering=1 means flush (pretty much) with every newline
+    with info_file.open('w', encoding='UTF-8', buffering=1) as f:
+        f.write(notes)
+        start_time = time.perf_counter()
+
+        folder = top_dir / 'in_lmbda'
+        if not folder.is_dir():
+            folder.mkdir(parents=True)
+        np.save(folder / 'lmbda.npy', lmbda_values)
+        for t in [0.7, 1.0, 2.0]:
+            a_values = np.zeros_like(lmbda_values)
+            b_values = np.zeros_like(lmbda_values)
+            a_std_values = np.zeros_like(lmbda_values)
+            b_std_values = np.zeros_like(lmbda_values)
+            for i, lmbda in enumerate(lmbda_values):
+                (a, b), (a_std, b_std) = fit()
+                a_values[i] = a
+                b_values[i] = b
+                a_std_values[i] = a_std
+                b_std_values[i] = b_std
+            np.save(folder / f'{t:.1f}_a.npy', a_values)
+            np.save(folder / f'{t:.1f}_b.npy', b_values)
+            np.save(folder / f'{t:.1f}_a_std.npy', a_std_values)
+            np.save(folder / f'{t:.1f}_b_std.npy', b_std_values)
+
+            f.write(f'For {t = }, max std dev was\n')
+            f.write(f'\tfor a: {np.max(a_std_values):.2e}\n')
+            f.write(f'\tfor b: {np.max(b_std_values):.2e}\n')
+            elapsed_time = time.perf_counter() - start_time
+            f.write(f'\tElapsed time: {elapsed_time:.1f} s\n\n')
+
+        folder = top_dir / 'in_t'
+        if not folder.is_dir():
+            folder.mkdir(parents=True)
+        np.save(folder + 't.npy', t_values)
+        for lmbda in [1.0, 2.0, 2.5]:
+            a_values = np.zeros_like(t_values)
+            b_values = np.zeros_like(t_values)
+            a_std_values = np.zeros_like(t_values)
+            b_std_values = np.zeros_like(t_values)
+            for i, t in enumerate(t_values):
+                (a, b), (a_std, b_std) = fit()
+                a_values[i] = a
+                b_values[i] = b
+                a_std_values[i] = a_std
+                b_std_values[i] = b_std
+            np.save(folder / f'{lmbda:.1f}_a.npy', a_values)
+            np.save(folder / f'{lmbda:.1f}_b.npy', b_values)
+            np.save(folder / f'{lmbda:.1f}_a_std.npy', a_std_values)
+            np.save(folder / f'{lmbda:.1f}_b_std.npy', b_std_values)
+
+            f.write(f'For {lmbda = }, max std dev was\n')
+            f.write(f'\tfor a: {np.max(a_std_values):.2e}\n')
+            f.write(f'\tfor b: {np.max(b_std_values):.2e}\n\n')
+            elapsed_time = time.perf_counter() - start_time
+            f.write(f'\tElapsed time: {elapsed_time:.1f} s\n\n')
+
+
+def plot_ellipse_parameters_in_lmbda():
+    folder = 'parameters_to_circle_fit/plot_run_1/in_lmbda/'
+    fig, (ax1, ax2) = plt.subplots(
+        nrows=2,
+        ncols=1,
+        figsize=(PC.fig_width, 1.5*PC.fig_height),
+        sharex=True
+    )
+
     for t, ls in zip([0.7, 1.0, 2.0], ['-', '--', '-.']):
-        a_values = np.zeros_like(lmbda_values)
-        b_values = np.zeros_like(lmbda_values)
-        a_std_values = np.zeros_like(lmbda_values)
-        b_std_values = np.zeros_like(lmbda_values)
-        for i, lmbda in enumerate(lmbda_values):
-            (a, b), (a_std, b_std) = fit()
-            a_values[i] = a
-            b_values[i] = b
-            a_std_values[i] = a_std
-            b_std_values[i] = b_std
-        print(f'For {t = }, max std dev was')
-        print(f'\tfor a: {np.max(a_std_values):.2e}')
-        print(f'\tfor b: {np.max(b_std_values):.2e}')
-        folder = 'parameters_to_circle_fit/plot_in_lmbda/'
-        np.save(folder + 'lmbda.npy', lmbda_values)
-        np.save(folder + f'{t:.1f}_a.npy', a_values)
-        np.save(folder + f'{t:.1f}_b.npy', b_values)
-        np.save(folder + f'{t:.1f}_a_std.npy', a_std_values)
-        np.save(folder + f'{t:.1f}_b_std.npy', b_std_values)
         ax1.plot(
             np.load(folder + 'lmbda.npy'),
             np.load(folder + f'{t:.1f}_a.npy'),
@@ -221,54 +281,16 @@ def plot_ellipse_parameters_from_compute_in_lmbda():
     fig.savefig(PC.save_dir + '/ellipse-params-in-lambda.pdf')
 
 
-def plot_ellipse_parameters_from_compute_in_t():
-    sigma_values = sigma_values_from_logspace()
-
+def plot_ellipse_parameters_in_t():
+    folder = 'parameters_to_circle_fit/plot_run_1/in_t/'
     fig, (ax1, ax2) = plt.subplots(
         nrows=2,
         ncols=1,
         figsize=(PC.fig_width, 1.5*PC.fig_height),
         sharex=True
     )
-    def fit():
-        y = np.zeros_like(sigma_values)
-        for i, sigma in enumerate(sigma_values):
-            os = 40 # if lmbda < 2.5 else 200
-            qr = QuantumRabi(omega=1.0, t=t, g=1.0, lmbda=lmbda, oscillator_size=os)
-            F = qr.F_from_minimization(sigma, 0)
-            T = F - qr.analytic_terms_of_F(sigma, 0)
-            y[i] = T
 
-        ellipsis_params, pcov = curve_fit(
-            ellipse_fit,
-            sigma_values,
-            y,
-            bounds=([1, -np.inf], [np.inf, np.inf]),
-        )
-        perr = np.sqrt(np.diag(pcov))
-        return ellipsis_params, perr
-
-    t_values = np.linspace(0.05, 3, 60)
     for lmbda, ls in zip([1.0, 2.0, 2.5], ['-', '--', '-.']):
-        a_values = np.zeros_like(t_values)
-        b_values = np.zeros_like(t_values)
-        a_std_values = np.zeros_like(t_values)
-        b_std_values = np.zeros_like(t_values)
-        for i, t in enumerate(t_values):
-            (a, b), (a_std, b_std) = fit()
-            a_values[i] = a
-            b_values[i] = b
-            a_std_values[i] = a_std
-            b_std_values[i] = b_std
-        print(f'For {lmbda = }, max std dev was')
-        print(f'\tfor a: {np.max(a_std_values):.2e}')
-        print(f'\tfor b: {np.max(b_std_values):.2e}')
-        folder = 'parameters_to_circle_fit/plot_in_t/'
-        np.save(folder + 't.npy', t_values)
-        np.save(folder + f'{lmbda:.1f}_a.npy', a_values)
-        np.save(folder + f'{lmbda:.1f}_b.npy', b_values)
-        np.save(folder + f'{lmbda:.1f}_a_std.npy', a_std_values)
-        np.save(folder + f'{lmbda:.1f}_b_std.npy', b_std_values)
         ax1.plot(
             np.load(folder + 't.npy'),
             np.load(folder + f'{lmbda:.1f}_a.npy'),
@@ -637,7 +659,8 @@ def interactive_plot_in_sigma():
 
 if __name__ == '__main__':
     # PC.use_tex()
-    interactive_plot_in_sigma()
+    # interactive_plot_in_sigma()
     # interactive_plot_of_ellipse_params()
     # plot_ellipse_parameters_from_compute_in_lmbda()
     # plot_ellipse_parameters_from_compute_in_t()
+    compute_ellipse_params_for_plot()
