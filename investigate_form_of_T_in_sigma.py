@@ -180,6 +180,7 @@ def compute_ellipse_params_for_plot():
         f.write(notes)
         start_time = time.perf_counter()
 
+        """
         folder = top_dir / 'in_lmbda'
         if not folder.is_dir():
             folder.mkdir(parents=True)
@@ -205,11 +206,12 @@ def compute_ellipse_params_for_plot():
             f.write(f'\tfor b: {np.max(b_std_values):.2e}\n')
             elapsed_time = time.perf_counter() - start_time
             f.write(f'\tElapsed time: {elapsed_time:.1f} s\n\n')
+        """
 
         folder = top_dir / 'in_t'
         if not folder.is_dir():
             folder.mkdir(parents=True)
-        np.save(folder + 't.npy', t_values)
+        np.save(folder / 't.npy', t_values)
         for lmbda in [1.0, 2.0, 2.5]:
             a_values = np.zeros_like(t_values)
             b_values = np.zeros_like(t_values)
