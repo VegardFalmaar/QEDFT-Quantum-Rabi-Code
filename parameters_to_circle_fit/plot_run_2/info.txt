@@ -1,0 +1,23 @@
+
+    Running with omega = 1 and g = 1. When running for plot in lambda, three
+    values of t are used. The values of t are the prefix to all the different
+    saved files. Vice versa when running for plot in t. The strategy for
+    oscillator size is 40 up to lambda = 1, 100 up to lambda = 2, and 200
+    above. Tolerance for the minimization in qmodel/dft.py is 1e-6.
+
+
+    For t = 0.7, max std dev was
+	for a: 2.22e-03
+	for b: 1.79e-03
+	Elapsed time: 18366.2 s
+
+For t = 1.0, max std dev was
+	for a: 3.16e-03
+	for b: 4.15e-03
+	Elapsed time: 35391.1 s
+
+For t = 2.0, max std dev was
+	for a: 5.64e-03
+	for b: 2.04e-02
+	Elapsed time: 49913.1 s
+
