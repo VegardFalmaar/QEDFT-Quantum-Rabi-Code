@@ -6,4 +6,21 @@
     above. Tolerance for the minimization in qmodel/dft.py is 1e-6.
 
 
-    
+    For lmbda = 1.0, max std dev was
+	for a: 4.51e-03
+	for b: 1.33e-02
+
+	Elapsed time: 4655.2 s
+
+For lmbda = 2.0, max std dev was
+	for a: 3.61e-03
+	for b: 3.38e-02
+
+	Elapsed time: 30141.5 s
+
+For lmbda = 2.5, max std dev was
+	for a: 3.77e-03
+	for b: 4.72e-02
+
+	Elapsed time: 67451.6 s
+
