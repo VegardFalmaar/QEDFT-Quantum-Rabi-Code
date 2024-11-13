@@ -315,6 +315,72 @@ def plot_ellipse_parameters_in_t():
     fig.savefig(PC.save_dir + '/ellipse-params-in-t.pdf')
 
 
+def plot_std_dev_of_ellipse_parameters_in_lmbda():
+    run = 2
+    folder = f'parameters_to_circle_fit/plot_run_{run}/in_lmbda/'
+    fig, (ax1, ax2) = plt.subplots(
+        nrows=2,
+        ncols=1,
+        figsize=(PC.fig_width, 1.5*PC.fig_height),
+        sharex=True
+    )
+
+    for t, ls in zip([0.7, 1.0, 2.0], ['-', '--', '-.']):
+        ax1.plot(
+            np.load(folder + 'lmbda.npy'),
+            np.load(folder + f'{t:.1f}_a_std.npy'),
+            label=rf'$t = {t:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+        ax2.plot(
+            np.load(folder + 'lmbda.npy'),
+            np.load(folder + f'{t:.1f}_b_std.npy'),
+            label=rf'$t = {t:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+    PC.set_ax_info(ax1, ylabel=r'std. dev. of $a$', legend=True)
+    PC.set_ax_info(ax2, xlabel=r'$\lambda$', ylabel=r'std. dev. of $b$', legend=True)
+    fig.tight_layout(pad=0.1)
+    fig.savefig(PC.save_dir + f'/ellipse-params-in-lambda-std-dev-run-{run}.pdf')
+
+
+def plot_std_dev_of_ellipse_parameters_in_t():
+    run = 2
+    folder = f'parameters_to_circle_fit/plot_run_{run}/in_t/'
+    fig, (ax1, ax2) = plt.subplots(
+        nrows=2,
+        ncols=1,
+        figsize=(PC.fig_width, 1.5*PC.fig_height),
+        sharex=True
+    )
+
+    for lmbda, ls in zip([1.0, 2.0, 2.5], ['-', '--', '-.']):
+        ax1.plot(
+            np.load(folder + 't.npy'),
+            np.load(folder + f'{lmbda:.1f}_a_std.npy'),
+            label=rf'$\lambda = {lmbda:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+        ax2.plot(
+            np.load(folder + 't.npy'),
+            np.load(folder + f'{lmbda:.1f}_b_std.npy'),
+            label=rf'$\lambda = {lmbda:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k'
+        )
+    PC.set_ax_info(ax1, ylabel=r'std. dev. of $a$', legend=True)
+    PC.set_ax_info(ax2, xlabel=r'$t$', ylabel=r'std. dev. of $b$', legend=True)
+    fig.tight_layout(pad=0.1)
+    fig.savefig(PC.save_dir + f'/ellipse-params-in-t-std-dev-run-{run}.pdf')
+
+
 def precompute_data():
     folder = Path('parameters_to_circle_fit')
     run = 2
@@ -660,9 +726,11 @@ def interactive_plot_in_sigma():
 
 
 if __name__ == '__main__':
-    # PC.use_tex()
+    PC.use_tex()
     # interactive_plot_in_sigma()
     # interactive_plot_of_ellipse_params()
     # plot_ellipse_parameters_from_compute_in_lmbda()
     # plot_ellipse_parameters_from_compute_in_t()
-    compute_ellipse_params_for_plot()
+    # compute_ellipse_params_for_plot()
+    # plot_std_dev_of_ellipse_parameters_in_lmbda()
+    plot_std_dev_of_ellipse_parameters_in_t()
