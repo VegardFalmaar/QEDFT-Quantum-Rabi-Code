@@ -21,9 +21,9 @@ def check_sigma_x(lam, sigma, xi, j):
               'Consider increasing oscillator_size')
 
 # **Moved to top level to enable pickling**
-def compute_single_vxc(sigma, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
+def compute_single_vdc(sigma, lam, xi, t, omega, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
     """
-    Compute a single v_Hxc value for a given sigma.
+    Compute a single v_dc value for a given sigma.
     This function is designed to be used with parallel execution.
     """
     # --- KS System Calculations (Spin Basis) ---
@@ -47,25 +47,26 @@ def compute_single_vxc(sigma, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full
     sigma_x_expval_full = sigma_x_full.expval(sol_full['gs_vector'])
     x_sigma_x_expval_full = (x_op_full * sigma_x_full).expval(sol_full['gs_vector'])
 
-    # --- Compute v_Hxc using force-balance equation ---
+    # --- Compute v_dc 
     numerator_full = t * sigma + lam * x_sigma_x_expval_full
     # To prevent division by zero, add a small epsilon
     epsilon = 1e-12
-    vxc_value = (-t * sigma / (sigma_x_expval_KS + epsilon)) + (numerator_full / (sigma_x_expval_full + epsilon))
-    return vxc_value
+    vdc_value = (-t * sigma / (sigma_x_expval_KS + epsilon)) + (numerator_full / (sigma_x_expval_full + epsilon))
+    return vdc_value
 
-# Function to compute v_Hxc over a range of sigma values
-def compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
+# Function to compute v_dc over a range of sigma values
+def compute_v_dc(sigma_space, lam, xi, t, omega, E_KS, E_full, sigma_x_pf, sigma_x_full, x_op_full):
     """
-    Compute v_Hxc over a range of sigma values.
+    Compute v_dc over a range of sigma values.
     This function is parallelized to utilize multiple CPU cores.
     """
     # Create a partial function with fixed parameters except sigma
     partial_func = functools.partial(
-        compute_single_vxc,
+        compute_single_vdc,
         lam=lam,
         xi=xi,
         t=t,
+        omega=omega,
         E_KS=E_KS,
         E_full=E_full,
         sigma_x_pf=sigma_x_pf,
@@ -78,14 +79,14 @@ def compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full, sigma_x_pf, sigma_x_ful
 
     return np.array(results)
 
-# Function to compute the approximation using eta
+# Function to compute the approximation using eta_c
 @njit
-def compute_approximation(sigma_space, lam, xi, eta):
-    vx_eta = lam * xi + lam**2 * sigma_space * eta
+def compute_approximation(sigma_space, lam, xi, eta_c):
+    vx_eta = lam * xi + lam**2 * sigma_space * eta_c
     return vx_eta
 
-# Function to plot v_Hxc and its approximations
-def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size, ax=None):
+# Function to plot v_dc and its approximations
+def plot_v_dc_vs_approximations(lam, xi, t, omega, oscillator_size, ax=None):
     # --- KS System (Spin Basis) ---
     # Define spin basis
     b_spin = q.SpinBasis()
@@ -108,31 +109,31 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size, ax=None):
     sigma_z_full = sigma_z_pf.extend(b)
     sigma_x_full = sigma_x_pf.extend(b)
     # Define full Hamiltonian with coupling
-    H0_full = num_op_full + 0.5 - t * sigma_x_full
+    H0_full = omega * (num_op_full + 0.5) - t * sigma_x_full
     CouplingRabi = x_op_full * sigma_z_full
     # Energy functional for full system
     E_full = q.EnergyFunctional(H0_full + lam * CouplingRabi, [sigma_z_full, x_op_full])
 
-    # --- Compute v_Hxc over sigma_space ---
+    # --- Compute v_dc over sigma_space ---
     sigma_space = np.linspace(-0.95, 0.95, 201)
     sigma_space_deriv = np.linspace(-0.01, 0.01, 5)
 
-    # Compute exact v_Hxc
-    vxc = compute_v_hxc(sigma_space, lam, xi, t, E_KS, E_full,
-                        sigma_x_pf, sigma_x_full, x_op_full)
-    vxc = np.real(vxc)
+    # Compute exact v_dc
+    vdc = compute_v_dc(sigma_space, lam, xi, t, omega, E_KS, E_full,
+                       sigma_x_pf, sigma_x_full, x_op_full)
+    vdc = np.real(vdc)
 
-    # Compute derivative for eta calculation
-    vxc_deriv = compute_v_hxc(sigma_space_deriv, lam, xi, t, E_KS, E_full,
-                              sigma_x_pf, sigma_x_full, x_op_full)
-    vxc_deriv = np.real(vxc_deriv)
+    # Compute derivative for eta_c calculation
+    vdc_deriv = compute_v_dc(sigma_space_deriv, lam, xi, t, omega, E_KS, E_full,
+                             sigma_x_pf, sigma_x_full, x_op_full)
+    vdc_deriv = np.real(vdc_deriv)
     delta_sigma = sigma_space_deriv[1] - sigma_space_deriv[0]
     # Use central difference for derivative
-    dvxc_dsigma = (vxc_deriv[2] - vxc_deriv[0]) / (2 * delta_sigma)
-    eta_tangent = dvxc_dsigma / lam**2
+    dvdc_dsigma = (vdc_deriv[2] - vdc_deriv[0]) / (2 * delta_sigma)
+    eta_tangent = dvdc_dsigma / lam**2
     print(f"Computed η for tangency at σ=0 and λ={lam}: η = {eta_tangent}")
 
-    # Compute approximation using computed eta
+    # Compute approximation using computed eta_c
     vx_eta_tangent = compute_approximation(sigma_space, lam, xi, eta_tangent)
     vx_eta_tangent = np.real(vx_eta_tangent)
 
@@ -140,23 +141,23 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size, ax=None):
     if ax is None:
         fig, ax = plt.subplots(figsize=(PlotConfig.fig_width, PlotConfig.fig_height))
 
-    # Plot exact v_Hxc
+    # Plot exact v_dc
     ax.plot(
         sigma_space,
-        vxc,
+        vdc,
         linestyle=PlotConfig.line_styles[0],
         linewidth=PlotConfig.linewidth,
-        label=rf'$v_{{\mathrm{{Hxc}}}}$',
+        label=rf'$v_{{\mathrm{{dc}}}}$',
         color=PlotConfig.colors[0]
     )
 
-    # Plot approximation with eta_tangent
+    # Plot approximation with eta_c
     ax.plot(
         sigma_space,
         vx_eta_tangent,
         linestyle=PlotConfig.line_styles[1],
         linewidth=PlotConfig.linewidth,
-        label=rf'$v_{{\mathrm{{Hxc}}}}^{{\mathrm{{pf}}, \eta_c}}$, $\eta_c={eta_tangent:.2f}$',
+        label=rf'$v_{{\mathrm{{dc}}}}^{{\mathrm{{pf}}, \eta_\mathrm{{c}}}}$, $\eta_\mathrm{{c}}={eta_tangent:.2f}$',
         color=PlotConfig.colors[0]
     )
 
@@ -168,14 +169,14 @@ def plot_v_hxc_vs_approximations(lam, xi, t, oscillator_size, ax=None):
 
     PlotConfig.parameter_text_box(
         ax,
-        s=rf'$\lambda = {lam}, \; t = {t}, \; \xi = {xi}$',
+        s=rf'$\lambda = {lam}, \; t = {t}, \; \xi = {xi}, \; \omega = {omega}$',
         loc='lower right'
     )
 
     return ax  
 
-# Helper function to compute eta_tangent for a given lambda
-def compute_eta_for_lambda(lam, xi, t, oscillator_size_base):
+# Helper function to compute eta_c for a given lambda
+def compute_eta_for_lambda(lam, xi, t, omega, oscillator_size_base):
     """
     Compute eta_tangent for a specific lambda value.
     This function is designed to be used with parallel execution.
@@ -206,22 +207,22 @@ def compute_eta_for_lambda(lam, xi, t, oscillator_size_base):
     x_op_full = b_oscillator.x_operator().extend(b)
     sigma_z_full = sigma_z_pf.extend(b)
     sigma_x_full = sigma_x_pf.extend(b)
-    H0_full = num_op_full + 0.5 - t * sigma_x_full
+    H0_full = omega * (num_op_full + 0.5) - t * sigma_x_full
     CouplingRabi = x_op_full * sigma_z_full
     E_full = q.EnergyFunctional(H0_full + lam * CouplingRabi, [sigma_z_full, x_op_full])
 
-    # Compute v_Hxc at sigma values around sigma=0
+    # Compute v_dc at sigma values around sigma=0
     sigma_space_deriv = np.linspace(-0.02, 0.02, 9)
-    vxc_deriv = compute_v_hxc(
-        sigma_space_deriv, lam, xi, t, E_KS, E_full,
+    vdc_deriv = compute_v_dc(
+        sigma_space_deriv, lam, xi, t, omega, E_KS, E_full,
         sigma_x_pf, sigma_x_full, x_op_full)
-    vxc_deriv = np.real(vxc_deriv)
+    vdc_deriv = np.real(vdc_deriv)
 
     # Compute derivative using central difference
     delta_sigma = sigma_space_deriv[1] - sigma_space_deriv[0]
-    dvxc_dsigma = np.gradient(vxc_deriv, delta_sigma)
-    dvxc_dsigma_at_zero = dvxc_dsigma[len(dvxc_dsigma) // 2]
-    eta_tangent = dvxc_dsigma_at_zero / lam**2
+    dvdc_dsigma = np.gradient(vdc_deriv, delta_sigma)
+    dvdc_dsigma_at_zero = dvdc_dsigma[len(dvdc_dsigma) // 2]
+    eta_tangent = dvdc_dsigma_at_zero / lam**2
 
     # Return the lambda, eta_tangent, and oscillator_size used
     return lam, eta_tangent, current_oscillator_size
@@ -229,12 +230,13 @@ def compute_eta_for_lambda(lam, xi, t, oscillator_size_base):
 def main():
     xi = 0  # xi = 0
     t = 1
+    omega = 1  # omega = 1
 
     # Define lambda values and oscillator sizes
     lam1 = 1
-    oscillator_size1 = 30
+    oscillator_size1 = 300
     lam2 = 2.5
-    oscillator_size2 = 50
+    oscillator_size2 = 500
 
     # Create figure with two subplots sharing the x-axis
     fig, (ax1, ax2) = plt.subplots(
@@ -246,11 +248,11 @@ def main():
 
     # Plot for λ = 1 on ax1
     print(f"Generating Plot for λ = {lam1}")
-    plot_v_hxc_vs_approximations(lam1, xi, t, oscillator_size1, ax=ax1)
+    plot_v_dc_vs_approximations(lam1, xi, t, omega, oscillator_size1, ax=ax1)
 
     # Plot for λ = 2.5 on ax2
     print(f"Generating Plot for λ = {lam2}")
-    plot_v_hxc_vs_approximations(lam2, xi, t, oscillator_size2, ax=ax2)
+    plot_v_dc_vs_approximations(lam2, xi, t, omega, oscillator_size2, ax=ax2)
 
     # Set x-label only on the bottom subplot
     PlotConfig.set_ax_info(
@@ -265,19 +267,19 @@ def main():
         'lam2': lam2,
         'xi': xi,
         't': t,
+        'omega': omega,
         'osc_size1': oscillator_size1,
         'osc_size2': oscillator_size2
     }
 
-    # Replace 'alex' with 'upd' in the filename
-    fig.savefig(PlotConfig.save_fname('v_hxc_lambda_shared_x_upd', '.pdf', params), format='pdf')
+    fig.savefig(PlotConfig.save_fname('v_dc_lambda_shared_x_upd', '.pdf', params), format='pdf')
     # plt.show()  # Uncomment to display the plot
 
     # Increase oscillator_size for higher λ
-    max_lambda = 5
+    max_lambda = 3
     oscillator_size_base = 200  # Base oscillator size
 
-    lam_values = np.linspace(0.1, max_lambda, 50)
+    lam_values = np.linspace(0.1, max_lambda, 30)
     # We will use data_dict to store the results
     data_dict = {}
 
@@ -309,6 +311,7 @@ def main():
         compute_eta_for_lambda,
         xi=xi,
         t=t,
+        omega=omega,
         oscillator_size_base=oscillator_size_base
     )
 
@@ -327,7 +330,7 @@ def main():
                 data_dict[lam_result] = (eta_tangent, oscillator_size_used)
 
                 # Write the updated data_dict to CSV file
-                with open(csv_file_path, 'w', newline='') as f:
+                with open(csv_filename, 'w', newline='') as f:
                     writer = csv.writer(f)
                     writer.writerow(['lambda', 'eta', 'oscillator_size'])
                     for lam_key in sorted(data_dict.keys()):
@@ -346,7 +349,6 @@ def main():
                     eta_plot,
                     linestyle='-',
                     linewidth=PlotConfig.linewidth,
-                    label=r'$\eta_c$ vs $\lambda$',
                     color=PlotConfig.colors[0]
                 )
 
@@ -359,13 +361,13 @@ def main():
                 PlotConfig.set_ax_info(
                     ax,
                     xlabel=r'$\lambda$',
-                    ylabel=r'$\eta$',
+                    ylabel=r'$\eta_\mathrm{c}$',
                     legend=True
                 )
 
                 PlotConfig.parameter_text_box(
                     ax,
-                    s=rf'$t = {t}, \; \xi = {xi}$',
+                    s=rf'$t = {t}, \; \xi = {xi}, \; \omega = {omega}$',
                     loc='lower right'
                 )
 
@@ -377,6 +379,7 @@ def main():
                 params = {
                     'xi': xi,
                     't': t,
+                    'omega': omega,
                     'lam': lam_result
                 }
                 # Format lam_result to avoid periods in the filename
@@ -400,7 +403,6 @@ def main():
         eta_plot,
         linestyle='-',
         linewidth=PlotConfig.linewidth,
-        label=r'$\eta_c$ vs $\lambda$',
         color=PlotConfig.colors[0]
     )
 
@@ -413,17 +415,17 @@ def main():
     PlotConfig.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
-        ylabel=r'$\eta$',
-        legend=True
+        ylabel=r'$\eta_\mathrm{c}$',
+        #legend=True
     )
 
     PlotConfig.parameter_text_box(
         ax,
-        s=rf'$t = {t}, \; \xi = {xi}$',
+        s=rf'$t = {t}, \; \xi = {xi}, \; \omega = {omega}$',
         loc='lower right'
     )
 
-    ax.legend(loc='upper left', bbox_to_anchor=(0, 0.9))
+    #ax.legend(loc='upper left', bbox_to_anchor=(0, 0.9))
 
     fig.tight_layout(pad=0.1)
 
@@ -431,6 +433,7 @@ def main():
     params = {
         'xi': xi,
         't': t,
+        'omega': omega
     }
     fname = PlotConfig.save_fname('eta_vs_lambda_upd_final', '.pdf', params)
     fig.savefig(fname, format='pdf')
@@ -438,3 +441,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
