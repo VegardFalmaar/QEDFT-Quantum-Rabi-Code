@@ -16,7 +16,7 @@ PC.use_tex()
 
 def main():
     fig, ax = plt.subplots(
-        figsize=(PC.fig_width, PC.fig_height)
+        figsize=(PC.fig_width, PC.fig_height - 0.6)
         # figsize=(PC.fig_width, PC.fig_width)
     )
     lim = 2 / np.sqrt(5)
@@ -33,8 +33,8 @@ def main():
     )
 
     ax.plot(
-        np.array([-1, 1]),
-        np.array([1, -1]),
+        2*np.array([-1, 1]),
+        2*np.array([1, -1]),
         ls=':',
         lw=PC.linewidth,
         c='k',
@@ -50,21 +50,19 @@ def main():
         lw=PC.linewidth,
         # 'x',
         c='k',
-        label=r'Reflection'
+        label=r'$\frac{\partial}{\partial v} E^0$'
     )
 
-    # ax.axis('equal')
-    # ax.set_xlim([-1.1, 1.1])
 
     PC.set_ax_info(
         ax=ax,
-        xlabel=r'$\sigma$',
-        ylabel=r'$v$',
+        ylabel=r'$v$',  # temporary to get the save width as the other plots
         legend=True,
     )
 
     PC.tight_layout(fig, ax_aspect=1.75)
-    fig.savefig(PC.save_dir + '/conjugate-pair-geometry-shaded.pdf')
+    ax.set_ylabel('')
+    fig.savefig(PC.save_dir + '/conjugate-pair-geometry.pdf')
     # plt.show()
 
 

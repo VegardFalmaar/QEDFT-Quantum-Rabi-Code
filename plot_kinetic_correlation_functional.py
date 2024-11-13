@@ -20,7 +20,8 @@ def plot_in_lambda():
         T_values = np.zeros_like(lmbda_values)
         for i, lmbda in enumerate(lmbda_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
+            F = qr.F_from_minimization(sigma, xi)
+            T_values[i] = F - qr.analytic_terms_of_F(sigma, xi)
 
         ax.plot(
             lmbda_values,
@@ -33,7 +34,7 @@ def plot_in_lambda():
     PC.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
-        ylabel=r'$T_c^\lambda (\sigma)$',
+        ylabel=r'$I^\lambda (\sigma)$',
         legend=True,
     )
 
@@ -82,7 +83,8 @@ def plot_in_sigma():
         T_values = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
+            F = qr.F_from_minimization(sigma, xi)
+            T_values[i] = F - qr.analytic_terms_of_F(sigma, xi)
 
         ax.plot(
             sigma_values,
@@ -95,7 +97,7 @@ def plot_in_sigma():
     PC.set_ax_info(
         ax,
         xlabel=r'$\sigma$',
-        ylabel=r'$T_c^\lambda (\sigma)$',
+        ylabel=r'$I^\lambda (\sigma)$',
         legend=True,
     )
 
@@ -120,5 +122,5 @@ def plot_in_sigma():
 
 
 if __name__ == '__main__':
-    plot_in_lambda()
+    # plot_in_lambda()
     plot_in_sigma()
