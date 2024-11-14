@@ -26,7 +26,7 @@ class PlotConfig:
     fontsize_parameters = 8
     parameters_alpha = 0.5
 
-    line_styles = ['-', '--', ':']
+    line_styles = ['-', '--', ':', '-.']
     linewidth = 0.8
     markersize = 1.2
     # If we want to use other colors than black, I think we should find

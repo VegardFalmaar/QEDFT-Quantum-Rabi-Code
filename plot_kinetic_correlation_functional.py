@@ -20,7 +20,8 @@ def plot_in_lambda():
         T_values = np.zeros_like(lmbda_values)
         for i, lmbda in enumerate(lmbda_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
+            F = qr.F_from_minimization(sigma, xi)
+            T_values[i] = F - qr.analytic_terms_of_F(sigma, xi)
 
         ax.plot(
             lmbda_values,
@@ -33,7 +34,7 @@ def plot_in_lambda():
     PC.set_ax_info(
         ax,
         xlabel=r'$\lambda$',
-        ylabel=r'$T_c^\lambda (\sigma)$',
+        ylabel=r'$I^\lambda (\sigma)$',
         legend=True,
     )
 
@@ -82,7 +83,8 @@ def plot_in_sigma():
         T_values = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
+            F = qr.F_from_minimization(sigma, xi)
+            T_values[i] = F - qr.analytic_terms_of_F(sigma, xi)
 
         ax.plot(
             sigma_values,
@@ -95,7 +97,7 @@ def plot_in_sigma():
     PC.set_ax_info(
         ax,
         xlabel=r'$\sigma$',
-        ylabel=r'$T_c^\lambda (\sigma)$',
+        ylabel=r'$I^\lambda (\sigma)$',
         legend=True,
     )
 
@@ -119,6 +121,70 @@ def plot_in_sigma():
     fig.savefig(PC.save_fname('kinetic-correlation-functional-in-sigma', '.pdf', p))
 
 
+def plot_in_t():
+    omega = 1.0
+    g = 3.0 * omega**(3/2)
+    xi = 0.0 / np.sqrt(omega)
+
+    t_values = np.linspace(0.01, 8.0, 41)
+    fig, ax = plt.subplots(figsize=(PC.fig_width, PC.fig_height - 0.445))
+    for (lmbda, sigma), ls in zip(
+        [(0.3, 0.0), (0.3, 0.6), (0.2, 0.0), (0.2, 0.6)],
+        PC.line_styles
+    ):
+        I_values = np.zeros_like(t_values)
+        for i, t in enumerate(t_values):
+            qr = QuantumRabi(omega, t, g, lmbda=lmbda)
+            F = qr.F_from_minimization(sigma, xi)
+            I_values[i] = F - qr.analytic_terms_of_F(sigma, xi)
+
+        ax.plot(
+            t_values,
+            I_values / omega,
+            label=r'$\lambda = ' f'{lmbda:.1f}, ' r'\sigma = ' f'{sigma:.1f}$',
+            ls=ls,
+            lw=PC.linewidth,
+            color='k',
+        )
+        asymptote = lmbda**2 * g**2 * (1 - sigma**2) / (2 * omega**2)
+        ax.plot(
+            [t_values[0], t_values[-1]],
+            [asymptote, asymptote],
+            ls=ls,
+            lw=PC.linewidth,
+            color='k',
+            alpha=0.3,
+        )
+
+    PC.set_ax_info(
+        ax,
+        xlabel=r'$t$',
+        ylabel=r'$I^\lambda (\sigma)$',
+        legend=True,
+    )
+
+    PC.parameter_text_box(
+        ax,
+        # s=r'$ \omega = 1, \; g = 3, \; \lambda = 0.2 $',
+        s=r'$ \omega = 1, \; g = 3 $',
+        loc='lower right',
+    )
+
+    # ax.set_ylim(-0.01, 0.21)
+    # ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+
+    PC.tight_layout(fig, ax_aspect=1.75)
+
+    p = {
+        'omega': omega,
+        'g': g,
+        # 'lmbda': lmbda,
+        'xi': xi,
+    }
+    fig.savefig(PC.save_fname('kinetic-correlation-functional-in-t', '.pdf', p))
+
+
 if __name__ == '__main__':
-    plot_in_lambda()
-    plot_in_sigma()
+    # plot_in_lambda()
+    # plot_in_sigma()
+    plot_in_t()

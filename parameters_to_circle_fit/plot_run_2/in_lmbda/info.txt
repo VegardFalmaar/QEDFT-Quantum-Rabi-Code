@@ -1,0 +1,8 @@
+
+    Running with omega = 1 and g = 1 for three values of t and a number of
+    values of lambda. The values of t are the prefix to all the different saved
+    files here. The strategy for oscillator size is 40 up to lambda = 1, 100 up
+    to lambda = 2, and 200 above.
+
+
+    

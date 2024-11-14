@@ -72,7 +72,7 @@ def main():
     ax2.plot(
         lmbda_values,
         analytic_terms / omega,
-        label=r'$F_\mathrm{LL}^\lambda - T_c^\lambda$',
+        label=r'$F_\mathrm{LL}^\lambda - I^\lambda$',
         ls='--',
         lw=PC.linewidth,
         color='k',
