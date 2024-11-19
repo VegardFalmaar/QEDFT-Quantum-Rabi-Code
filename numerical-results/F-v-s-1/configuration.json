@@ -1,0 +1,14 @@
+{
+  "float_precision": 12,
+  "max_string_length": 8,
+  "parameters": {
+    "lmbda": "float",
+    "sigma": "float",
+    "t": "float"
+  },
+  "targets": {
+    "F": "float",
+    "s": "float",
+    "v": "float"
+  }
+}

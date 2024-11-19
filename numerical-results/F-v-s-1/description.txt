@@ -1,0 +1,15 @@
+A first run to store results regarding the QR model.
+        Results are the (Levy--)Lieb-type functional F, the value of v which
+        correspond to F, and the optimal translation s of the Gaussian trial
+        states.
+
+        Runs are performed with the constrained optimization (i.e. fixing j to
+        the optimal value from the hypervirial theorem) using oscillator size
+        40.
+
+        Larger values for lambda create trouble for the small values of t,
+        therefore the parameters here are in the ranges
+        lambda: [0, 2]
+        t: [0.2, 3]
+        sigma: (-1, 1)
+        

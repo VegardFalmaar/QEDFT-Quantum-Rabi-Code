@@ -97,14 +97,16 @@ class QuantumRabi:
     def optimal_j(self, sigma: float, xi: float) -> float:
         return - self.omega**2*xi - self.lmbda*self.g*sigma
 
-    def F_from_constrained_minimization(self, sigma: float, xi: float) -> float:
+    def F_from_constrained_minimization(
+        self, sigma: float, xi: float
+    ) -> Tuple[float, float]:
         optimal_j = self.optimal_j(sigma, xi)
         energy = q.EnergyFunctional(
             self.op_H_0 + optimal_j*self.op_x,
             [self.op_sigma_z]
         )
-        lt = energy.legendre_transform([sigma], verbose=False, gtol=1e-6)
-        return lt['F'] - optimal_j*xi
+        lt = energy.legendre_transform([sigma], verbose=True, gtol=1e-6)
+        return lt['F'] - optimal_j*xi, lt['pot']
 
     def T_integrand(self, tau: float, sigma: float) -> float:
         qr_tau = QuantumRabi(
