@@ -15,7 +15,7 @@ class QuantumRabi:
         lmbda: float = 1,
         oscillator_size: int = 40
     ) -> None:
-        assert t >= 0, f't should be >= 1, not {t}.'
+        assert t >= 0, f't should be >= 0, not {t}.'
         self.omega = omega
         self.t = t
         self.g = g
@@ -89,10 +89,22 @@ class QuantumRabi:
 
     def F_from_minimization(self, sigma: float, xi: float) -> float:
         energy = q.EnergyFunctional(self.op_H_0, [self.op_sigma_z, self.op_x])
-        lt = energy.legendre_transform([sigma, xi], verbose=False)
+        lt = energy.legendre_transform([sigma, xi], verbose=False, gtol=1e-5)
         _, j = lt['pot']
         self.check_sigma_xi(self.omega, self.lmbda*self.g, sigma, xi, j)
         return lt['F']
+
+    def optimal_j(self, sigma: float, xi: float) -> float:
+        return - self.omega**2*xi - self.lmbda*self.g*sigma
+
+    def F_from_constrained_minimization(self, sigma: float, xi: float) -> float:
+        optimal_j = self.optimal_j(sigma, xi)
+        energy = q.EnergyFunctional(
+            self.op_H_0 + optimal_j*self.op_x,
+            [self.op_sigma_z]
+        )
+        lt = energy.legendre_transform([sigma], verbose=False, gtol=1e-6)
+        return lt['F'] - optimal_j*xi
 
     def T_integrand(self, tau: float, sigma: float) -> float:
         qr_tau = QuantumRabi(

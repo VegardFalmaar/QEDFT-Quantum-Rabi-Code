@@ -162,3 +162,16 @@ def test_eq_20(omega, t, g, v, j):
         RHS = 0.0
         assert LHS.imag < TOL
         assert LHS.real - RHS < TOL
+
+
+@pytest.mark.parametrize('omega', omega_values)
+@pytest.mark.parametrize('t', t_values)
+@pytest.mark.parametrize('g', g_values)
+@pytest.mark.parametrize('sigma', sigma_values)
+@pytest.mark.parametrize('xi', xi_values)
+@pytest.mark.parametrize('lmbda', lmbda_values)
+def test_F_from_constrained_minimization(omega, t, g, sigma, xi, lmbda):
+    qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=OSCILLATOR_SIZE)
+    LHS = qr.F_from_minimization(sigma, xi)
+    RHS = qr.F_from_constrained_minimization(sigma, xi)
+    assert abs(LHS - RHS) < TOL
