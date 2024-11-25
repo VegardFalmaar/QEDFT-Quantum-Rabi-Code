@@ -74,13 +74,25 @@ class OptimalGaussian:
             a, b, c = abc
         return s**2 - a*np.exp(-b*s**2) + c*s
 
+    def base_Hamiltonian_bound(self, s: float) -> float:
+        o, t, g, l, sm = self.omega, self.t, self.g, self.lmbda, self.sigma
+        result = 0.5 * o \
+            + 0.5 * o**2 * s**2 * (1 + sm) / (1 - sm) \
+            + l * g * (1 + sm) * s \
+            - t * np.sqrt(1 - sm**2) * np.exp(-o*s**2/(1 - sm)**2)
+        # convert from potential numpy float to regular float
+        # return float(result)
+        return result
+
     def kinetic_correlation_bound(self, s: float) -> float:
         o, t, g, l, sm = self.omega, self.t, self.g, self.lmbda, self.sigma
         result = 0.5 * o**2 * s**2 * (1 + sm) / (1 - sm) \
             + l * g * (1 + sm) * s \
             + l**2 * g**2 * (1 - sm**2) / (2 * o**2) \
             + t * np.sqrt(1 - sm**2) * (1 - np.exp(-o*s**2/(1 - sm)**2))
-        return float(result)
+        # convert from potential numpy float to regular float
+        # return float(result)
+        return result
 
 
 
@@ -249,9 +261,130 @@ def plot_of_kinetic_correlation():
     # plt.show()
 
 
+def prepare_energy_data_initialize():
+    ComputeDB.initialize(
+        Path('/home/vegard/Git/Database/quantum-rabi'),
+        'E-sigma-xi-1',
+        {'g': float, 't': float, 'v': float},
+        {'E': float, 'G': float, 'sigma': float, 'xi': float},
+        description='''The ground state energy and the approximation when
+        assuming the gs to be an optimally translated Gaussian.
+
+        The results are the actual ground state energy E (from the lowest
+        eigenvalue of the matrix representing the Hamiltonian), the bound from
+        the best possible Gaussian G, the optimal values of sigma and xi when
+        assuming the gs to be a translated Gaussian. The value of the external
+        quantity j is fixed to zero.
+        ''',
+    )
+
+
+def prepare_energy_data():
+    # t_g_values = [(2.0, 2.0), (0.6, 2.0), (2.0, 0.7)]
+    t_g_values = [(2.0, 1.0)]
+    v_values = np.linspace(0, 1, 100)
+    omega = 1.0
+    lmbda = 1.0
+
+    db = ComputeDB(Path('/home/vegard/Git/Database/quantum-rabi/E-sigma-xi-1'))
+
+    def find_gaussian_bound():
+        eps = 1e-6
+        res = sp.optimize.minimize(
+            find_gaussian_bound_for_specific_sigma,
+            x0=[0.0, 0.0],
+            method='L-BFGS-B',
+            bounds=[(-1 + eps, 1 - eps), (-np.inf, np.inf)],
+        )
+        optimal_sigma, optimal_xi = res.x
+        energy_bound = res.fun
+        return optimal_sigma, optimal_xi, energy_bound
+
+    def find_gaussian_bound_for_specific_sigma(x):
+        sigma, xi = x
+        og = OptimalGaussian(omega=omega, t=t, g=g, lmbda=lmbda, sigma=sigma)
+        optimal_s = og.find_optimal_translation()
+        base_energy_for_xi_zero = og.base_Hamiltonian_bound(optimal_s)
+        base_energy = base_energy_for_xi_zero + g*sigma*xi + 0.5*omega**2*xi**2
+        return base_energy + v*sigma
+
+    for t, g in t_g_values:
+        qr = QuantumRabi(omega=omega, t=t, g=g, lmbda=lmbda)
+
+        for v in v_values:
+            op_H = qr.op_H_0 + v*qr.op_sigma_z
+            E = op_H.eig(hermitian = True)['eigenvalues'][0]
+            s, x, G = find_gaussian_bound()
+            db.add(
+                {'g': g, 't': t, 'v': v},
+                {'E': E, 'G': G, 'sigma': s, 'xi': x},
+                save=False,
+            )
+    db.save_data()
+
+
+def plot_energy_data():
+    PC.use_tex()
+
+    # t_g_values = [(2.0, 2.0), (0.6, 2.0), (2.0, 0.7)]
+    t_g_values = [(2.0, 0.7), (2.0, 1.0)]
+    v_values = np.linspace(0, 1, 100)
+
+    gs_energies = np.zeros_like(v_values)
+    gaussian_energies = np.zeros_like(v_values)
+
+    db = ComputeDB(Path('/home/vegard/Git/Database/quantum-rabi/E-sigma-xi-1'))
+
+    fig, ax = plt.subplots(figsize=(PC.fig_width, PC.fig_height - 0.314))
+    colors = ["#9986A5", "#79402E", "#CCBA72", "#0F0D0E", "#D9D0D3", "#8D8680"]
+
+    for (t, g), c in zip(t_g_values, colors):
+        for i, v in enumerate(v_values):
+            results = db[{'g': g, 't': t, 'v': v}]
+            gs_energies[i] = results['E']
+            gaussian_energies[i] = results['G']
+
+        ax.plot(
+            v_values,
+            gs_energies,
+            c=c,
+            ls='-',
+            lw=PC.linewidth,
+            label=f'${t = :.2f}$,\n${g = :.2f}$',
+            # label=r'$E(v, 0)$',
+        )
+        ax.plot(
+            v_values,
+            gaussian_energies,
+            c=c,
+            ls='--',
+            lw=PC.linewidth,
+            # label='Gaussian',
+        )
+
+    PC.set_ax_info(
+        ax=ax,
+        xlabel=r'$v$',
+        title='Ground state energy $E(v, 0)$ (solid)\nand Gaussian bound (dashed)',
+        legend=True,
+    )
+    PC.parameter_text_box(
+        ax,
+        s=r'$\omega = 1.0$', # , t = 2.0, g = 0.7$',
+        loc='upper right'
+    )
+
+    PC.tight_layout(fig, ax_aspect=1.75)
+    fig.savefig(PC.save_dir + '/gaussian-fit-to-ground-state-energy.pdf')
+    # plt.show()
+
+
 def main():
     # interactive_plot_of_kinetic_correlation()
-    plot_of_kinetic_correlation()
+    # plot_of_kinetic_correlation()
+    # prepare_energy_data_initialize()
+    # prepare_energy_data()
+    plot_energy_data()
 
 
 if __name__ == '__main__':
