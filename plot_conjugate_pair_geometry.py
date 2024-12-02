@@ -34,11 +34,11 @@ def main():
 
     ax.plot(
         2*np.array([-1, 1]),
-        2*np.array([1, -1]),
+        2*np.array([-1, 1]),
         ls=':',
         lw=PC.linewidth,
         c='k',
-        label=r'$\sigma + v = 0$'
+        label=r'$\sigma = v$'
     )
 
     mirrored_x_coords = - v
