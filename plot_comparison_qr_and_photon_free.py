@@ -12,14 +12,11 @@ from qmodel import NumberBasis, SpinBasis   # type: ignore
 from quantum_rabi import QuantumRabi
 from plot_config import PlotConfig as PC
 
-
 def ev(op, state):
     """Shorthand function for the exp val of an operator in a given state."""
     return op.expval(state, transform_real=True)
 
-
 PC.use_tex()
-
 
 om = 1
 t = 1
@@ -40,14 +37,9 @@ CouplingRabi = x_op*sigma_z
 
 spec_QR = []
 spec_pf = []
-d_xi = []
 d_sigma = []
-d_kin = []
-d_coupl = []
-d_num = []
-d_E = []
 
-g_span = np.linspace(0, 3, 50)
+g_span = np.linspace(0, 3, 100)
 v = 0.1
 j = 0.1
 
@@ -59,13 +51,6 @@ sigma_z_pf = b_spin.sigma_z()
 for g in g_span:
     H_QR = H0_Rabi + g*CouplingRabi + v*sigma_z + j*x_op
     H_pf = -t*sigma_x_pf + (v - g*j/om**2)*sigma_z_pf - (j**2+g**2)/(2*om**2) + om/2
-    # photon-free operators
-    x_pf = -(g*sigma_z_pf+j)/om**2
-    a_pf = sqrt(om/2)*x_pf
-    num_pf = a_pf**2
-    p_pf = 2*g*t/om**2*sigma_y_pf
-    # alternative way of writing H_pf with photon-free operators
-    # H_pf = 1/2*om**2*x_pf**2  + om/2 - t*sigma_x_pf + g*x_pf*sigma_z_pf + v*sigma_z_pf + j*x_pf
 
     res_QR = H_QR.eig(hermitian = True)
     res_pf = H_pf.eig(hermitian = True)
@@ -85,14 +70,8 @@ for g in g_span:
         j=j,
         tol=1e-6,
     )
-
     # compare expvals
-    d_E.append(spec_QR[-1][0] - spec_pf[-1][0]) # groundstate energy
-    d_xi.append(ev(x_op, Psi_QR) - ev(x_pf, Psi_pf))
     d_sigma.append(ev(sigma_z, Psi_QR) - ev(sigma_z_pf, Psi_pf))
-    d_kin.append(-t*ev(sigma_x, Psi_QR) + t*ev(sigma_x_pf, Psi_pf))
-    d_coupl.append(g*ev(sigma_z*x_op, Psi_QR) - g*ev(sigma_z_pf*x_pf, Psi_pf))
-    d_num.append(ev(num_op, Psi_QR) - ev(num_pf, Psi_pf))
 
 fig, (ax1, ax2) = plt.subplots(
     nrows=2, ncols=1, figsize=(PC.fig_width, 1.5*PC.fig_height), sharex=True
@@ -106,18 +85,10 @@ ax1.plot(g_span, spec_pf, ls='--', c='k', lw=lw)
 ax1.plot([], ls='-', c='k', label='Quantum Rabi', lw=lw)
 ax1.plot([], ls='--', c='k', label='Photon-free', lw=lw)
 
-ax2.plot(g_span, d_E, ls='-', c='k', label=r'$\hat H$', lw=lw)
-ax2.plot(g_span, d_xi, ls='--', c='k', label=r'$\hat x$', lw=lw)
-ax2.plot(g_span, d_sigma, ls='-.', c='k', label=r'$\hat\sigma_z$', lw=lw)
-ax2.plot(g_span, d_kin, ls=':', c='k', label=r'$-t\hat\sigma_x$', lw=lw)
-lbl = r'$g\hat\sigma_z\hat x$'
-ax2.plot(g_span, d_coupl, marker='o', ls='', c='k', label=lbl, ms=ms)
-lbl = r'$\hat a^\dagger\hat a$'
-ax2.plot(g_span, d_num, marker='^', ls='', c='k', label=lbl, ms=ms)
+ax2.plot(g_span, d_sigma, ls='-', c='k', lw=lw)
 
-PC.set_ax_info(ax1, legend=True)   # also sets the fontsize of axis ticks
-PC.set_ax_info(ax2, xlabel='$g$', legend=False)
-ax2.legend(loc='lower left', ncols=2, fontsize=PC.fontsize_legends)
+PC.set_ax_info(ax1, ylabel='$E$', legend=True)   # also sets the fontsize of axis ticks
+PC.set_ax_info(ax2, xlabel='$g$', ylabel='$\Delta\sigma$', legend=False)
 
 # do the normal tight_layout with the usual padding and then shift a little to
 # the left
