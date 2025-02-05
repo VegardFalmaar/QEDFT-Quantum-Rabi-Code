@@ -10,11 +10,15 @@ from optimally_translated_gaussian import OptimalGaussian
 
 def initialize_db():
     ComputeDB.initialize(
-        Path('numerical-results'),
-        'F-v-s-1',
+        Path('/home/vegard/Git/Database/quantum-rabi'),
+        'F-v-s-2',
         {'lmbda': float, 'sigma': float, 't': float},
         {'F': float, 'v': float, 's': float},
-        description='''A first run to store results regarding the QR model.
+        description='''A copy of F-v-s-1 with reduced float_precision since the
+        numerical inaccuracies gave different results on different machines.
+
+        From F-v-s-1:
+        A first run to store results regarding the QR model.
         Results are the (Levy--)Lieb-type functional F, the value of v which
         correspond to F, and the optimal translation s of the Gaussian trial
         states.
@@ -25,11 +29,13 @@ def initialize_db():
 
         Larger values for lambda create trouble for the small values of t,
         therefore the parameters here are in the ranges
-        lambda: [0, 2]
-        t: [0.2, 3]
-        sigma: (-1, 1)
-        '''
+        sigma_values = sigma_values_from_logspace()[1:-1]
+        lmbda_values = np.linspace(0.0, 2.0, 60)
+        t_values = np.linspace(0.2, 3, 60)
+        ''',
+        float_precision=6,
     )
+
 
 def main():
     sigma_values = sigma_values_from_logspace()[1:-1]
@@ -53,8 +59,6 @@ def main():
     db.save_data()
 
 
-
-
 if __name__ == '__main__':
-    # initialize_db()
-    main()
+    initialize_db()
+    # main()
