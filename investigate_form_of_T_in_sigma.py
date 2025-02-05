@@ -46,7 +46,8 @@ def plot_T_and_ellipse_in_sigma_from_compute():
         T_values = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
             qr = QuantumRabi(omega, t, g, lmbda=lmbda)
-            T_values[i] = qr.F(sigma, xi) - qr.analytic_terms_of_the_coupling(sigma, xi)
+            T_values[i] = qr.F_from_minimization(sigma, xi) \
+                - qr.analytic_terms_of_F(sigma, xi)
 
         ax.plot(
             sigma_values,
@@ -119,7 +120,7 @@ def tabulate_ellipse_parameters():
         y = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
             qr = QuantumRabi(omega, t, g, lmbda=1)
-            y[i] = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0) / omega
+            y[i] = qr.F_from_minimization(sigma, 0) - qr.analytic_terms_of_F(sigma, 0) / omega
 
         ellipse_params, _ = curve_fit(ellipse_fit, sigma_values, y)
         a, b, d = ellipse_params
@@ -391,7 +392,7 @@ def precompute_data():
         y = np.zeros_like(sigma_values)
         for i, sigma in enumerate(sigma_values):
             qr = QuantumRabi(omega, t, g, lmbda=1)
-            T = qr.F(sigma, 0) - qr.analytic_terms_of_the_coupling(sigma, 0)
+            T = qr.F_from_minimization(sigma, 0) - qr.analytic_terms_of_F(sigma, 0)
             y[i] = T
 
         ellipsis_params, pcov = curve_fit(
