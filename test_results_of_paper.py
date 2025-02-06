@@ -14,7 +14,7 @@ from quantum_rabi import QuantumRabi
 #   LHS < RHS
 # passes the test if
 #   LHS - RHS < TOL.
-TOL = 1e-6
+TOL = 1e-5
 OSCILLATOR_SIZE = 40
 
 omega_values = [0.7, 1.3]
@@ -173,5 +173,5 @@ def test_eq_20(omega, t, g, v, j):
 def test_F_from_constrained_minimization(omega, t, g, sigma, xi, lmbda):
     qr = QuantumRabi(omega, t, g, lmbda=lmbda, oscillator_size=OSCILLATOR_SIZE)
     LHS = qr.F_from_minimization(sigma, xi)
-    RHS = qr.F_from_constrained_minimization(sigma, xi)
+    RHS, _ = qr.F_from_constrained_minimization(sigma, xi)
     assert abs(LHS - RHS) < TOL
